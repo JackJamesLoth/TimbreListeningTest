@@ -1547,7 +1547,7 @@ TimbreTest.prototype.createTestDOM = function (TestIdx) {
         var row = new Array();
         var cell = new Array();
 
-  
+
         // create random file mapping if not yet done
         if (!this.TestState.FileMappings[TestIdx]) {
            this.TestState.FileMappings[TestIdx] = {"A_picking": "", "B_picking": "", "A_strumming": "", "B_strumming": "", "A_fingerstlye": "", "B_fingerstlye": "", "guitar_A": "", "guitar_B": ""};
@@ -1690,8 +1690,8 @@ TimbreTest.prototype.createTestDOM = function (TestIdx) {
         row  = tab.insertRow(-1);
         cell[0] = row.insertCell(-1);
         cell[1] = row.insertCell(-1);
-        cell[0].innerHTML = "What makes Guitar A dissimilar/similar to Guitar B?"
-        cell[1].innerHTML = "What makes Guitar B dissimilar/similar to Guitar A?"
+        cell[0].innerHTML = "Please describe the timbre of guitar A"
+        cell[1].innerHTML = "Please describe the timbre of guitar B"
 
         row[1] = tab.insertRow(-1);
         cell[0] = row[1].insertCell(-1);

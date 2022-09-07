@@ -248,7 +248,7 @@ a:hover {
 
 /* The slider itself */
 .slider {
-    width: 100%; /* Full-width */
+    width: 80%; /* Full-width */
   }
 
 .commentbox {
@@ -264,4 +264,8 @@ datalist {
 textarea {
     resize: none;
     height: 60px;
+}
+
+#commentTable1 {
+    width: 100%;
 }
