@@ -379,6 +379,57 @@ function shuffleArray(array) {
 
     return array;
 }
+function createCookie(name, value, days) {
+    var expires;
+    if (days) {
+        var date = new Date();
+        date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+        expires = "; expires=" + date.toGMTString();
+    }
+    else {
+        expires = "";
+    }
+    document.cookie = name + "=" + value + expires + "; path=/";
+}
+
+function getCookie(c_name) {
+    if (document.cookie.length > 0) {
+        var c_start = document.cookie.indexOf(c_name + "=");
+        if (c_start != -1) {
+            c_start = c_start + c_name.length + 1;
+            var c_end = document.cookie.indexOf(";", c_start);
+            if (c_end == -1) {
+                c_end = document.cookie.length;
+            }
+            return unescape(document.cookie.substring(c_start, c_end));
+        }
+    }
+    return "";
+}
+
+function eraseCookie(name) {   
+    document.cookie = name+'=; Max-Age=-99999999;';  
+}
+
+function saveTestState(testState) {
+    var testStateJSON = JSON.stringify(testState);
+    console.log(testStateJSON)
+    createCookie('testStateCookie', testStateJSON);
+}
+
+function loadTestState() {
+    var loadedTestStateJSON = getCookie('testStateCookie');
+    if (loadedTestStateJSON.length == 0) {
+        return null
+    }
+    var loadedState = JSON.parse(loadedTestStateJSON)
+    return(loadedState)
+
+}
+
+function deleteTestState() {
+    eraseCookie('testStateCookie')
+}
 
 // jQuery UI based alert() dialog replacement
 $.extend({ alert: function (message, title) {
@@ -544,9 +595,7 @@ $.extend({ alert: function (message, title) {
         if (this.saveRatings(this.TestState.TestSequence[this.TestState.CurrentTest])==false)
             return;
 
-        console.log(this.TestState.Ratings[this.TestState.CurrentTest].dissimilarityComment1)
-
-        // Check if all audio has been listened to
+        // Check if all audio has been listened to, all sliders clicked and text boxes filled
         if (this.TestState.AllAudioListened[this.TestState.CurrentTest] < 6) {
             alert("Please ensure you have listened to every sound example before continuing.")
             return
@@ -561,6 +610,8 @@ $.extend({ alert: function (message, title) {
             }
         }
 
+        // Save temporary version of test state
+
         // stop time measurement
         var stopTime = new Date().getTime();
         this.TestState.Runtime[this.TestState.TestSequence[this.TestState.CurrentTest]] += stopTime - this.TestState.startTime;
@@ -568,10 +619,16 @@ $.extend({ alert: function (message, title) {
         // go to next test
         if (this.TestState.CurrentTest<this.TestState.TestSequence.length-1) {
             this.TestState.CurrentTest = this.TestState.CurrentTest+1;
+
+            // Save test state as cookie
+            saveTestState(this.TestState)
+
         	this.runTest(this.TestState.TestSequence[this.TestState.CurrentTest]);
         } else {
             // if previous test was last one, ask before loading final page and then exit test
             if (confirm('This was the last test. Do you want to finish?')) {
+
+                deleteTestState()
             
                 $('#TableContainer').hide();
                 $('#PlayerControls').hide();
@@ -656,9 +713,19 @@ $.extend({ alert: function (message, title) {
         this.TestState.AllAudioListened = Array(this.TestConfig.Testsets.length).fill(0);
         this.TestState.AllSlidersClicked = Array(this.TestConfig.Testsets.length).fill(0); 
 
+        
+        // Get previous test state if it exists
+        var loadedTestState = loadTestState();
+        if (loadedTestState != null) {
+            this.TestState = structuredClone(loadedTestState)
+        } else {
+            this.TestState.CurrentTest = 0;
+        }
+
         // run first test
-        this.TestState.CurrentTest = 0;
     	this.runTest(this.TestState.TestSequence[this.TestState.CurrentTest]);
+    
+        
     }
 
     // ###################################################################    
