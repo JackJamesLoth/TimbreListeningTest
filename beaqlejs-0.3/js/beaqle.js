@@ -587,19 +587,21 @@ $.extend({ alert: function (message, title) {
     ListeningTest.prototype.nextTest = function() {
 
         this.pauseAllAudios();
-
-
         
+        var testIdx = this.TestState.TestSequence[this.TestState.CurrentTest]
 
         // save ratings from last test
-        if (this.saveRatings(this.TestState.TestSequence[this.TestState.CurrentTest])==false)
+        if (this.saveRatings(testIdx)==false)
             return;
 
+        console.log(this.TestState)
+
+        /*
         // Check if all audio has been listened to, all sliders clicked and text boxes filled
         if (this.TestState.AllAudioListened[this.TestState.CurrentTest] < 6) {
             alert("Please ensure you have listened to every sound example before continuing.")
             return
-        } else if (this.TestState.Ratings[this.TestState.CurrentTest].dissimilarityComment1.length == 0 || this.TestState.Ratings[this.TestState.CurrentTest].dissimilarityComment2.length == 0  || this.TestState.Ratings[this.TestState.CurrentTest].timbreComment1.length == 0  || this.TestState.Ratings[this.TestState.CurrentTest].timbreComment2.length == 0 ) {
+        } else if (this.TestState.Ratings[testIdx].dissimilarityComment1.length == 0 || this.TestState.Ratings[testIdx].dissimilarityComment2.length == 0  || this.TestState.Ratings[testIdx].timbreComment1.length == 0  || this.TestState.Ratings[testIdx].timbreComment2.length == 0 ) {
             alert("Please ensure you have filled out each text box before continuing.")
             return
         } else if (this.TestState.AllSlidersClicked[this.TestState.CurrentTest] < 3) {
@@ -609,6 +611,7 @@ $.extend({ alert: function (message, title) {
                 this.TestState.AllSlidersClicked[this.TestState.CurrentTest] = 3
             }
         }
+        */
 
         // Save temporary version of test state
 
@@ -744,6 +747,7 @@ $.extend({ alert: function (message, title) {
 
         // set current test name
         $('#TestHeading').html(this.TestConfig.Testsets[TestIdx].Name + " (" + (this.TestState.CurrentTest+1) + " of " + this.TestState.TestSequence.length + ")");
+        //$('#TestHeading').html(" Test " + (this.TestState.CurrentTest+1) + " of " + this.TestState.TestSequence.length);
         $('#TestHeading').show();
 
         // hide everything instead of load animation
