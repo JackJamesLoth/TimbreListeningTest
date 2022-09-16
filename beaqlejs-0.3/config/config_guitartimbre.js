@@ -6,7 +6,7 @@ var TestConfig = {
     "ShowResults": true,
     "EnableABLoop": true,
     "EnableOnlineSubmission": true,
-    "RandomizeFileOrder": false,
+    "RandomizeFileOrder": true,
     "RandomizeTestOrder": true,
     "BeaqleServiceURL": "web_service/beaqleJS_Service.php",
     "SupervisorContact": "j.j.loth@qmul.ac.uk",

@@ -138,6 +138,8 @@
     
     // add new file to pool
     AudioPool.prototype.addAudio = function(path, ID){
+
+        
     
         var audiotag = document.createElement("audio");
 
@@ -413,7 +415,6 @@ function eraseCookie(name) {
 
 function saveTestState(testState) {
     var testStateJSON = JSON.stringify(testState);
-    console.log(testStateJSON)
     createCookie('testStateCookie', testStateJSON);
 }
 
@@ -593,8 +594,6 @@ $.extend({ alert: function (message, title) {
         // save ratings from last test
         if (this.saveRatings(testIdx)==false)
             return;
-
-        console.log(this.TestState)
 
         /*
         // Check if all audio has been listened to, all sliders clicked and text boxes filled
@@ -778,18 +777,12 @@ $.extend({ alert: function (message, title) {
             $(this).on('click', $.proxy(function(event) {
                 
                 var clicked = $(thisButton).attr('clicked') === 'true';
-                console.log(clicked)
                 handlerObject.playAudio(audioID)
                 if (!clicked) {
                     thisButton.setAttribute('clicked', 'true')
                     
                     this.TestState.AllAudioListened[this.TestState.CurrentTest]++
                 }
-                console.log(this)
-                
-                
-                
-                console.log(audioID)
             }, handlerObject));
         });
 
@@ -805,7 +798,6 @@ $.extend({ alert: function (message, title) {
                     TestState.AllSlidersClicked[TestState.CurrentTest]++
                     
                 }
-                console.log(TestState.AllSlidersClicked)
             }))
         });
             
@@ -813,7 +805,6 @@ $.extend({ alert: function (message, title) {
         if (typeof this.TestState.Ratings[TestIdx] !== 'undefined') this.readRatings(TestIdx);
 
         this.TestState.startTime = new Date().getTime();
-            
     }
 
     // ###################################################################
@@ -1665,15 +1656,18 @@ TimbreTest.prototype.createTestDOM = function (TestIdx) {
            this.TestState.FileMappings[TestIdx] = {"A_picking": "", "B_picking": "", "A_strumming": "", "B_strumming": "", "A_fingerstlye": "", "B_fingerstlye": "", "guitar_A": "", "guitar_B": ""};
            var RandFileNumber = Math.random();
            if (this.TestConfig.RandomizeFileOrder && RandFileNumber>0.5) {
+               console.log('Flipping files')
                this.TestState.FileMappings[TestIdx].A_picking = "B_picking";
                this.TestState.FileMappings[TestIdx].B_picking = "A_picking";
                this.TestState.FileMappings[TestIdx].A_strumming = "B_strumming";
                this.TestState.FileMappings[TestIdx].B_strumming = "A_strumming";
-               this.TestState.FileMappings[TestIdx].A_fingerstyte = "B_fingerstyle";
-               this.TestState.FileMappings[TestIdx].B_fingerstyte = "A_fingerstyle";
+               this.TestState.FileMappings[TestIdx].A_fingerstyle = "B_fingerstyle";
+               this.TestState.FileMappings[TestIdx].B_fingerstyle = "A_fingerstyle";
                this.TestState.FileMappings[TestIdx].guitar_A = this.TestConfig.Testsets[TestIdx].Guitars.B;
                this.TestState.FileMappings[TestIdx].guitar_B = this.TestConfig.Testsets[TestIdx].Guitars.A;
+
            } else {
+               console.log('Not flipping files')
                this.TestState.FileMappings[TestIdx].A_picking = "A_picking";
                this.TestState.FileMappings[TestIdx].B_picking = "B_picking";
                this.TestState.FileMappings[TestIdx].A_strumming = "A_strumming";
