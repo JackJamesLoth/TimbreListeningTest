@@ -282,9 +282,25 @@ datalist {
   }
 textarea {
     resize: none;
-    height: 60px;
+    height: 120px;
+    width: 80%;
 }
 
 #commentTable1 {
     width: 100%;
+}
+
+.sliderLabel {
+    padding: 5px;
+}
+
+.label {
+    padding: 10px;
+    padding-top: 30px;
+    font-size: larger;
+}
+
+.textbox {
+    width: 100%;
+    height: 100%;
 }

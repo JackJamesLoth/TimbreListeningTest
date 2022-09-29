@@ -117,6 +117,9 @@
     
     // callback for error event
     AudioPool.prototype.onDataLoaded = function(e) {}
+
+    // Callback for audio paused
+    AudioPool.prototype.onAudioPaused = function(e) {}   
     // ---------------------------------------------------------
 
 
@@ -240,6 +243,7 @@
  
             var audiotag = $('#'+this.PoolID+' > #audio'+this.IDPlaying).get(0);
             this.lastAudioPosition = audiotag.currentTime;
+            this.onAudioPaused(this.IDPlaying, this.lastAudioPosition)
             if ((this.waContext!==false) && (!audiotag.paused)) {
                 this.gainNodes[this.IDPlaying].gain.cancelScheduledValues(this.waContext.currentTime);
                 this.gainNodes[this.IDPlaying].gain.setTargetAtTime(0.0, this.waContext.currentTime + this.fadeDelay, this.fadeOutTime );
@@ -475,6 +479,7 @@ $.extend({ alert: function (message, title) {
             "CurrentTest": -1, 		// the current test index
             "TestIsRunning": 0,		// is true if test is running, false when finished or not yet started
             "FileMappings": [],		// json array with random file mappings
+            "AudioListenedLength": [],
             "Ratings": [],			// json array with ratings
             "EvalResults": [],      // json array to store the evaluated test results
             "AllAudioListened": [],
@@ -492,6 +497,7 @@ $.extend({ alert: function (message, title) {
         this.audioPool.onDataLoaded = $.proxy(this.audioLoadedCallback, this);
         this.audioPool.setLooped(this.TestConfig.LoopByDefault);
         this.audioPool.setAutoReturn(this.TestConfig.AutoReturnByDefault);
+        this.audioPool.onAudioPaused = $.proxy(this.audioPausedCallback, this);
 
         this.checkBrowserFeatures();
 
@@ -595,22 +601,9 @@ $.extend({ alert: function (message, title) {
         if (this.saveRatings(testIdx)==false)
             return;
 
-        /*
-        // Check if all audio has been listened to, all sliders clicked and text boxes filled
-        if (this.TestState.AllAudioListened[this.TestState.CurrentTest] < 6) {
-            alert("Please ensure you have listened to every sound example before continuing.")
-            return
-        } else if (this.TestState.Ratings[testIdx].dissimilarityComment1.length == 0 || this.TestState.Ratings[testIdx].dissimilarityComment2.length == 0  || this.TestState.Ratings[testIdx].timbreComment1.length == 0  || this.TestState.Ratings[testIdx].timbreComment2.length == 0 ) {
-            alert("Please ensure you have filled out each text box before continuing.")
-            return
-        } else if (this.TestState.AllSlidersClicked[this.TestState.CurrentTest] < 3) {
-            if (!confirm("You have not used all of the sliders. Are you sure you would like to continue with 1 or more sliders set to the default value?")) {
-                return
-            } else {
-                this.TestState.AllSlidersClicked[this.TestState.CurrentTest] = 3
-            }
+        if (this.checkTestElements() == false){
+            return;
         }
-        */
 
         // Save temporary version of test state
 
@@ -734,6 +727,15 @@ $.extend({ alert: function (message, title) {
     // prepares display to run test with number TestIdx
     ListeningTest.prototype.runTest = function(TestIdx) {
 
+        if (!this.TestState.AudioListenedLength[TestIdx]) {
+            this.TestState.AudioListenedLength[TestIdx] = {"A_picking": 0, "B_picking": 0, "A_strumming": 0, "B_strumming": 0, "A_fingerstlye": 0, "B_fingerstlye": 0, "guitar_A": 0, "guitar_B": 0};
+        }
+        
+
+        console.log(this.TestState)
+
+        
+
         this.pauseAllAudios();
 
         if ((TestIdx<0) || (TestIdx>this.TestConfig.Testsets.length)) throw new RangeError("Test index out of range!");
@@ -837,6 +839,13 @@ $.extend({ alert: function (message, title) {
     }
 
     // ###################################################################
+    // Test specific checks before moving to the next test
+    ListeningTest.prototype.checkTestElements = function () {
+        // overwrite and implement in inherited class
+        alert('Function formatResults() has not been implemented in your inherited class!');
+    }
+
+    // ###################################################################
     // create DOM for test display
     ListeningTest.prototype.createTestDOM = function (TestIdx) {
         // overwrite and implement in inherited class
@@ -902,6 +911,21 @@ $.extend({ alert: function (message, title) {
     }
 
 
+    // Called when someone pauses the audio
+    ListeningTest.prototype.audioPausedCallback = function(audioID, time) {
+
+        console.log(audioID)
+        console.log(time)
+        console.log(this.TestState)
+
+        
+        if (this.TestState.AudioListenedLength[this.TestState.TestSequence[this.TestState.CurrentTest]][audioID] < time) {
+            this.TestState.AudioListenedLength[this.TestState.TestSequence[this.TestState.CurrentTest]][audioID] = time
+        }
+        
+
+    }
+
     // ###################################################################
     // enable/disable looping for all audios
     ListeningTest.prototype.toggleLooping = function () {    
@@ -955,6 +979,7 @@ $.extend({ alert: function (message, title) {
 
         var EvalResults = this.TestState.EvalResults;        
         EvalResults.push(UserObj)
+        EvalResults.push(this.TestState.AudioListenedLength)
         
         var testHandle = this;
         $.ajax({
@@ -1083,526 +1108,6 @@ $.extend({ alert: function (message, title) {
         return featStr;
     }
 
-// ###################################################################
-// MUSHRA test main object
-
-// inherit from ListeningTest
-function MushraTest(TestData) {
-    ListeningTest.apply(this, arguments);
-}
-MushraTest.prototype = new ListeningTest();
-MushraTest.prototype.constructor = MushraTest;
-
-
-// implement specific code
-
-
-// ###################################################################
-// create random mapping to test files
-MushraTest.prototype.createFileMapping = function (TestIdx) {
-    var NumFiles = $.map(this.TestConfig.Testsets[TestIdx].Files, function(n, i) { return i; }).length;
-    var fileMapping = new Array(NumFiles);    
-
-    $.each(this.TestConfig.Testsets[TestIdx].Files, function(index, value) { 
-
-        do {
-            var RandFileNumber = Math.floor(Math.random()*(NumFiles));
-            if (RandFileNumber>NumFiles-1) RandFileNumber = NumFiles-1;
-        } while (typeof fileMapping[RandFileNumber] !== 'undefined');
-
-        if (RandFileNumber<0) alert(fileMapping);
-        fileMapping[RandFileNumber] = index;
-    });
-    
-    this.TestState.FileMappings[TestIdx] = fileMapping;
-}
-
-// ###################################################################
-// read ratings from TestState object
-MushraTest.prototype.readRatings = function (TestIdx) {
-    
-    if ((TestIdx in this.TestState.Ratings)==false) return false;
-    
-    var testObject = this;
-    $(".rateSlider").each( function() {
-        var pos = $(this).attr('id').lastIndexOf('slider');
-        var fileNum = $(this).attr('id').substring(pos+6, $(this).attr('id').length);	
-
-        $(this).slider('value', testObject.TestState.Ratings[TestIdx][fileNum]);
-        $(this).slider('refresh');
-    });
-
-}
-
-// ###################################################################
-// save ratings to TestState object
-MushraTest.prototype.saveRatings = function (TestIdx) {
-    var ratings = new Object();
-    $(".rateSlider").each( function() {
-        var pos = $(this).attr('id').lastIndexOf('slider');
-        var fileNum = $(this).attr('id').substring(pos+6, $(this).attr('id').length);
-        
-        ratings[fileNum] = $(this).slider( "option", "value" );
-    });
-
-    var MaxRatingFound = false;
-    for(var prop in ratings) {
-        if(ratings[prop] === this.TestConfig.RateMaxValue) {
-            MaxRatingFound = true;
-        }
-    }
-
-    if ((MaxRatingFound == true) || (this.TestConfig.RequireMaxRating == false)) {
-        this.TestState.Ratings[TestIdx] = ratings;
-        return true;
-    } else {
-        $.alert("At least one of your ratings has to be " + this.TestConfig.RateMaxValue + " for valid results!", "Warning!")
-        return false;
-    }
-}
-
-
-MushraTest.prototype.createTestDOM = function (TestIdx) {
-
-        // clear old test table
-        if ($('#TableContainer > table')) {
-            $('#TableContainer > table').remove();
-        }
-
-        // create random file mapping if not yet done
-        if (!this.TestState.FileMappings[TestIdx]) {
-                this.createFileMapping(TestIdx);
-        }
-
-        // create new test table
-        var tab = document.createElement('table');
-        tab.setAttribute('id','TestTable');
-            
-        var fileID = "";
-        var row = new Array();
-        var cell = new Array();
-            
-        // add reference
-        fileID = "Reference";
-        row  = tab.insertRow(-1);
-        cell[0] = row.insertCell(-1);
-        cell[0].innerHTML = "<span class='testItem'>Reference</span>";
-        cell[1] = row.insertCell(-1);
-        cell[1].innerHTML =  '<button id="play'+fileID+'Btn" class="playButton" rel="'+fileID+'">Play</button>';
-        cell[2] = row.insertCell(-1);
-        cell[2].innerHTML = "<button class='stopButton'>Stop</button>";  	
-        cell[3] = row.insertCell(-1);
-        cell[3].innerHTML = "<img id='ScaleImage' src='"+this.TestConfig.RateScalePng+"'/>";  	
-        
-        this.addAudio(TestIdx, fileID, fileID);
-            
-        // add spacing
-        row = tab.insertRow(-1);
-        row.setAttribute("height","5"); 
-
-        var rateMin = this.TestConfig.RateMinValue;
-        var rateMax = this.TestConfig.RateMaxValue;
-            
-        // add test items
-        for (var i = 0; i < this.TestState.FileMappings[TestIdx].length; i++) { 
-            
-            var fileID = this.TestState.FileMappings[TestIdx][i];
-            var relID  = "";
-            if (fileID === "Reference")
-                relID = "HiddenRef";
-            else
-                relID = fileID;
-
-            row[i]  = tab.insertRow(-1);
-            cell[0] = row[i].insertCell(-1);
-            cell[0].innerHTML = "<span class='testItem'>Test Item "+ (i+1)+"</span>";
-            cell[1] = row[i].insertCell(-1);
-            cell[1].innerHTML =  '<button id="play'+relID+'Btn" class="playButton" rel="'+relID+'">Play</button>';
-            cell[2] = row[i].insertCell(-1);
-            cell[2].innerHTML = "<button class='stopButton'>Stop</button>";  
-            cell[3] = row[i].insertCell(-1);
-            var fileIDstr = "";
-            if (this.TestConfig.ShowFileIDs) {
-                    fileIDstr = fileID;
-            }
-            cell[3].innerHTML = "<div class='rateSlider' id='slider"+fileID+"' rel='"+relID+"'>"+fileIDstr+"</div>";
-
-            this.addAudio(TestIdx, fileID, relID);
-
-        }        
-
-        // append the created table to the DOM
-        $('#TableContainer').append(tab);
-
-        var mushraConf = this.TestConfig;
-        $('.rateSlider').each( function() {
-            $(this).slider({
-                    value: mushraConf.RateDefaultValue,
-                    min: mushraConf.RateMinValue,
-                    max: mushraConf.RateMaxValue,
-                    animate: false,
-                    orientation: "horizontal"
-            });
-                    
-            $(this).slider('option', 'value', 0);
-            $(this).css('background-image', 'url('+mushraConf.RateScaleBgPng+')');
-        });
-
-}
-
-MushraTest.prototype.formatResults = function () {
-
-    var resultstring = "";
-
-
-    var numCorrect = 0;
-    var numWrong   = 0;
-
-    // evaluate single tests
-    for (var i = 0; i < this.TestConfig.Testsets.length; i++) {  
-        this.TestState.EvalResults[i]           = new Object();
-        this.TestState.EvalResults[i].TestID    = this.TestConfig.Testsets[i].TestID;
-
-        if (this.TestState.TestSequence.indexOf(i)>=0) {
-            this.TestState.EvalResults[i].Runtime   = this.TestState.Runtime[i];
-            this.TestState.EvalResults[i].rating    = new Object();
-            this.TestState.EvalResults[i].filename  = new Object();
-
-            resultstring += "<p><b>"+this.TestConfig.Testsets[i].Name + "</b> ("+this.TestConfig.Testsets[i].TestID+"), Runtime:" + this.TestState.Runtime[i]/1000 + "sec </p>\n";
-
-            var tab = document.createElement('table');
-            var row;
-            var cell;
-
-            row  = tab.insertRow(-1);
-            cell = row.insertCell(-1);
-            cell.innerHTML = "Filename";
-            cell = row.insertCell(-1);
-            cell.innerHTML = "Rating";
-
-            var fileArr    = this.TestConfig.Testsets[i].Files;
-            var testResult = this.TestState.EvalResults[i];
-
-
-            $.each(this.TestState.Ratings[i], function(fileID, rating) { 
-                row  = tab.insertRow(-1);
-                cell = row.insertCell(-1);
-                cell.innerHTML = fileArr[fileID];
-                cell = row.insertCell(-1);
-                cell.innerHTML = rating;
-
-                testResult.rating[fileID]   = rating;
-                testResult.filename[fileID] = fileArr[fileID];
-            });
-            
-            resultstring += tab.outerHTML + "\n";
-        }
-    }
-   
-    return resultstring;
-}
-
-
-// ###################################################################
-// ABX test main object
-
-// inherit from ListeningTest
-function AbxTest(TestData) {
-    ListeningTest.apply(this, arguments);
-}
-AbxTest.prototype = new ListeningTest();
-AbxTest.prototype.constructor = AbxTest;
-
-
-// implement specific code
-AbxTest.prototype.createTestDOM = function (TestIdx) {
-
-        // clear old test table
-        if ($('#TableContainer > table')) {
-            $('#TableContainer > table').remove();
-        }
-
-        // create new test table
-        var tab = document.createElement('table');
-        tab.setAttribute('id','TestTable');
-            
-        var fileID = "";
-        var row = new Array();
-        var cell = new Array();
-
-  
-        // create random file mapping if not yet done
-        if (!this.TestState.FileMappings[TestIdx]) {
-           this.TestState.FileMappings[TestIdx] = {"X": ""};
-           var RandFileNumber = Math.random();
-           if (RandFileNumber>0.5) {
-               this.TestState.FileMappings[TestIdx].X = "A";
-            } else {
-               this.TestState.FileMappings[TestIdx].X = "B";
-            }                
-        }	
-            
-        // add reference
-        fileID = "A";
-        row  = tab.insertRow(-1);
-        cell[0] = row.insertCell(-1);
-        cell[0].innerHTML = '<button id="play'+fileID+'Btn" class="playButton" rel="'+fileID+'">A</button>';
-        this.addAudio(TestIdx, fileID, fileID);
-
-        fileID = this.TestState.FileMappings[TestIdx].X;
-        var relID  = "X";
-        cell[1] = row.insertCell(-1);
-        cell[1].innerHTML =  '<button id="play'+relID+'Btn" class="playButton" rel="'+relID+'">X</button>';
-        this.addAudio(TestIdx, fileID, relID);
-
-        fileID = "B";
-        cell[2] = row.insertCell(-1);
-        cell[2].innerHTML = '<button id="play'+fileID+'Btn" class="playButton" rel="'+fileID+'">B</button>';
-        this.addAudio(TestIdx, fileID, fileID);
-
-        cell[3] = row.insertCell(-1);
-        cell[3].innerHTML = "<button class='stopButton'>Stop</button>";
-        
-        cell[4] = row.insertCell(-1);
-        cell[4].innerHTML = "Press buttons to start/stop playback."; 
- 
-        row[1]  = tab.insertRow(-1);
-        cell[0] = row[1].insertCell(-1);
-        cell[0].innerHTML = "<input type='radio' name='ItemSelection' id='selectA'/>";
-        cell[1] = row[1].insertCell(-1);
-        cell[2] = row[1].insertCell(-1);
-        cell[2].innerHTML = "<input type='radio' name='ItemSelection' id='selectB'/>";  
-        cell[3] = row[1].insertCell(-1);
-        cell[4] = row[1].insertCell(-1);
-        cell[4].innerHTML = "Please select the item which is closest to X!";  
-       
-        // add spacing
-        row = tab.insertRow(-1);
-        row.setAttribute("height","5");  
-
-        // append the created table to the DOM
-        $('#TableContainer').append(tab);	
-
-        // randomly preselect one radio button
-        if (typeof this.TestState.Ratings[TestIdx] == 'undefined') {
-            /*if (Math.random() > 0.5) {
-               $("#selectB").prop("checked", true);
-            } else {
-               $("#selectA").prop("checked", true);
-            }*/
-        }
-}
-
-
-AbxTest.prototype.readRatings = function (TestIdx) {
-
-    if (this.TestState.Ratings[TestIdx] === "A") {
-        $("#selectA").prop("checked", true);
-    } else if (this.TestState.Ratings[TestIdx] === "B") {
-        $("#selectB").prop("checked", true);
-    }
-
-}
-
-AbxTest.prototype.saveRatings = function (TestIdx) {
-
-    if ($("#selectA").prop("checked")) {
-        this.TestState.Ratings[TestIdx] = "A";
-    } else if ($("#selectB").prop("checked")) {
-        this.TestState.Ratings[TestIdx] = "B";
-    }
-}
-
-AbxTest.prototype.formatResults = function () {
-
-    var resultstring = "";
-    var tab = document.createElement('table');
-    var row;
-    var cell;
-
-    var numCorrect = 0;
-    var numWrong   = 0;
-
-    // evaluate single tests
-    for (var i = 0; i < this.TestConfig.Testsets.length; i++) {
-        this.TestState.EvalResults[i]        = new Object();
-        this.TestState.EvalResults[i].TestID = this.TestConfig.Testsets[i].TestID;
-
-        if (this.TestState.TestSequence.indexOf(i)>=0) {
-            row  = tab.insertRow(-1);
-
-            cell = row.insertCell(-1);
-            cell.innerHTML = this.TestConfig.Testsets[i].Name + "("+this.TestConfig.Testsets[i].TestID+")";
-            cell = row.insertCell(-1);
-
-
-            if (this.TestState.Ratings[i] === this.TestState.FileMappings[i].X) {
-                this.TestState.EvalResults[i] = true;
-                cell.innerHTML = "correct"; 
-                numCorrect += 1;
-            } else {
-                this.TestState.EvalResults[i] = false;
-                cell.innerHTML = "wrong"; 
-                numWrong += 1;
-            }
-        }
-    }
-
-    resultstring += tab.outerHTML;
-
-    resultstring += "<br/><p>Percentage of correct assignments: " + (numCorrect/this.TestConfig.Testsets.length*100).toFixed(2) + " %</p>";
-    return resultstring;
-}
-
-// ###################################################################
-// Preference test main object (modelled after ABX-Test)
-
-// inherit from ListeningTest
-function PrefTest(TestData) {
-    ListeningTest.apply(this, arguments);
-}
-PrefTest.prototype = new ListeningTest();
-PrefTest.prototype.constructor = PrefTest;
-
-
-// implement specific code
-PrefTest.prototype.createTestDOM = function (TestIdx) {
-
-        // clear old test table
-        if ($('#TableContainer > table')) {
-            $('#TableContainer > table').remove();
-        }
-
-        // create new test table
-        var tab = document.createElement('table');
-        tab.setAttribute('id','TestTable');
-            
-        var fileID = "";
-        var row = new Array();
-        var cell = new Array();
-
-        // create random file mapping if not yet done
-        if (!this.TestState.FileMappings[TestIdx]) {
-           this.TestState.FileMappings[TestIdx] = {"A": "", "B": ""};
-           var RandFileNumber = Math.random();
-           if (this.TestConfig.RandomizeFileOrder && RandFileNumber>0.5) {
-               this.TestState.FileMappings[TestIdx].A = "B";
-               this.TestState.FileMappings[TestIdx].B = "A";
-           } else {
-               this.TestState.FileMappings[TestIdx].A = "A";
-               this.TestState.FileMappings[TestIdx].B = "B";
-            }                
-        }	
-            
-        // add reference
-        fileID = this.TestState.FileMappings[TestIdx].A;
-        row  = tab.insertRow(-1);
-        cell[0] = row.insertCell(-1);
-        cell[0].innerHTML = '<button id="play'+fileID+'Btn" class="playButton" rel="'+fileID+'">A</button>';
-        this.addAudio(TestIdx, fileID, fileID);
-
-        fileID = this.TestState.FileMappings[TestIdx].B;
-        cell[1] = row.insertCell(-1);
-        cell[1].innerHTML = '<button id="play'+fileID+'Btn" class="playButton" rel="'+fileID+'">B</button>';
-        this.addAudio(TestIdx, fileID, fileID);
-
-        cell[2] = row.insertCell(-1);
-        cell[2].innerHTML = "<button class='stopButton'>Stop</button>";
-        
-        cell[3] = row.insertCell(-1);
-        cell[3].innerHTML = "Press buttons to start/stop playback."; 
- 
-        row[1]  = tab.insertRow(-1);
-        cell[0] = row[1].insertCell(-1);
-        cell[0].innerHTML = "<input type='radio' name='ItemSelection' id='selectA'/>";
-        cell[1] = row[1].insertCell(-1);
-        cell[1].innerHTML = "<input type='radio' name='ItemSelection' id='selectB'/>";  
-        cell[2] = row[1].insertCell(-1);
-        cell[3] = row[1].insertCell(-1);
-        cell[3].innerHTML = "Please select the item which you prefer!";
-       
-        // add spacing
-        row = tab.insertRow(-1);
-        row.setAttribute("height","5");  
-
-        // append the created table to the DOM
-        $('#TableContainer').append(tab);	
-
-        // randomly preselect one radio button
-        if (typeof this.TestState.Ratings[TestIdx] == 'undefined') {
-            /*if (Math.random() > 0.5) {
-               $("#selectB").prop("checked", true);
-            } else {
-               $("#selectA").prop("checked", true);
-            }*/
-        }
-}
-
-
-PrefTest.prototype.readRatings = function (TestIdx) {
-
-    if (this.TestState.Ratings[TestIdx] === "A") {
-        $("#selectA").prop("checked", true);
-    } else if (this.TestState.Ratings[TestIdx] === "B") {
-        $("#selectB").prop("checked", true);
-    }
-
-}
-
-PrefTest.prototype.saveRatings = function (TestIdx) {
-
-    if ($("#selectA").prop("checked")) {
-        this.TestState.Ratings[TestIdx] = "A";
-    } else if ($("#selectB").prop("checked")) {
-        this.TestState.Ratings[TestIdx] = "B";
-    }
-}
-
-PrefTest.prototype.formatResults = function () {
-
-    var resultstring = "";
-    var tab = document.createElement('table');
-    var head = tab.createTHead();
-    var row = head.insertRow(-1);
-    var cell = row.insertCell(-1); cell.innerHTML = "Test Name and ID";
-    cell = row.insertCell(-1);     cell.innerHTML = "presented order";
-    cell = row.insertCell(-1);     cell.innerHTML = "time in ms";
-    cell = row.insertCell(-1);     cell.innerHTML = "chosen preference";
-
-    var numCorrect = 0;
-    var numWrong   = 0;
-
-    // evaluate single tests
-    for (var i = 0; i < this.TestConfig.Testsets.length; i++) {
-        this.TestState.EvalResults[i] = new Object();
-        this.TestState.EvalResults[i].TestID = this.TestConfig.Testsets[i].TestID;
-        if (this.TestState.TestSequence.indexOf(i)>=0) {
-            row  = tab.insertRow(-1);
-            cell = row.insertCell(-1);
-            cell.innerHTML = this.TestConfig.Testsets[i].Name + "("+this.TestConfig.Testsets[i].TestID+")";
-            cell = row.insertCell(-1);
-            this.TestState.EvalResults[i].PresentationOrder = "A=" + this.TestState.FileMappings[i].A + ", B=" + this.TestState.FileMappings[i].B;
-            cell.innerHTML = this.TestState.EvalResults[i].PresentationOrder;
-            cell = row.insertCell(-1);
-            this.TestState.EvalResults[i].Runtime   = this.TestState.Runtime[i];
-            cell.innerHTML = this.TestState.EvalResults[i].Runtime; 
-            cell = row.insertCell(-1);
-            this.TestState.EvalResults[i].Preference = this.TestState.Ratings[i];
-            cell.innerHTML = this.TestState.EvalResults[i].Preference;
-        }
-    }
-    resultstring += tab.outerHTML;
-    return resultstring;
-}
-
-
-
-
-
-
-
-
-
 
 // ###################################################################
 // Guitar Timbre test main object (modelled after Preference-Test)
@@ -1614,49 +1119,151 @@ function TimbreTest(TestData) {
 TimbreTest.prototype = new ListeningTest();
 TimbreTest.prototype.constructor = TimbreTest;
 
+// Create a title label
+function createLabel(document, labelText) {
+    var div = document.createElement('div')
+    div.setAttribute("class", "label")
+    div.append(labelText)
+    $('#testElementsContainer').append(div);
+}
+
+// Creates a slider in the document
+function createSlider(document, id, mainLabel, labelA, labelB) {
+
+    var div = document.createElement('div')
+    div.setAttribute("class", "sliderLabel")
+    div.append(mainLabel)
+    $('#testElementsContainer').append(div);
+
+    var slider = document.createElement('div')
+    slider.setAttribute('class', 'slidecontainer')
+    var sliderInput = document.createElement('input')
+    sliderInput.setAttribute('type', 'range')
+    sliderInput.setAttribute('min', '0')
+    sliderInput.setAttribute('max', '100')
+    sliderInput.setAttribute('value', '50')
+    sliderInput.setAttribute('class', 'slider')
+    sliderInput.setAttribute('list', 'tickmarks')
+    sliderInput.setAttribute('id', id)
+
+    // Create datalist (is there a better way to do this?)
+    var datalist = document.createElement('datalist')
+    datalist.setAttribute('id', 'tickmarks')
+    var option1 = document.createElement('option')
+    option1.setAttribute('value', '0')
+    option1.setAttribute('label', labelA)
+    var option2 = document.createElement('option')
+    option2.setAttribute('value', '50')
+    var option3 = document.createElement('option')
+    option3.setAttribute('value', '100')
+    option3.setAttribute('label', labelB)
+    datalist.append(option1)
+    datalist.append(option2)
+    datalist.append(option3)
+
+    slider.append(sliderInput)
+    slider.append(datalist)
+
+    $('#testElementsContainer').append(slider);
+}
+
+// Create the playback buttons
+function createButtons(testInstance, fileA, fileB, testIdx) {
+
+    var tab = document.createElement('table');
+    tab.setAttribute('id','TestTable');
+        
+    var row = new Array();
+    var cell = new Array();
+
+    row  = tab.insertRow(-1);
+    cell[0] = row.insertCell(-1);
+    cell[0].innerHTML = '<button id="play_'+fileA+'_Btn" class="playButton" rel="'+fileA+'" clicked="false">Guitar A</button>';
+    testInstance.addAudio(testIdx, fileA, fileA);
+
+    cell[1] = row.insertCell(-1);
+    cell[1].innerHTML = '<button id="play_'+fileB+'_Btn" class="playButton" rel="'+fileB+'">Guitar B</button>';
+    testInstance.addAudio(testIdx, fileB, fileB);
+
+    cell[2] = row.insertCell(-1);
+    cell[2].innerHTML = "<button class='stopButton'>Stop</button>";
+
+    row  = tab.insertRow(-1);
+    cell[0] = row.insertCell(-1);
+    cell[1] = row.insertCell(-1);
+    
+    cell[2] = row.insertCell(-1);
+    cell[2].innerHTML = "Press buttons to start/stop playback."; 
+
+    row[1]  = tab.insertRow(-1);
+    cell[0] = row[1].insertCell(-1);
+    cell[1] = row[1].insertCell(-1);
+    cell[2] = row[1].insertCell(-1);
+    
+    // append the created table to the DOM
+    $('#testElementsContainer').append(tab);
+}
+
+// Create the playback buttons
+function createButtonsText(testInstance, fileA, fileB, text, testIdx) {
+
+    var tab = document.createElement('table');
+    tab.setAttribute('id','TestTable');
+        
+    var row = new Array();
+    var cell = new Array();
+
+    row  = tab.insertRow(-1);
+    cell[0] = row.insertCell(-1);
+    cell[0].innerHTML = '<button id="play_'+fileA+'_Btn" class="playButton" rel="'+fileA+'" clicked="false">Guitar A</button>';
+    testInstance.addAudio(testIdx, fileA, fileA);
+
+    cell[1] = row.insertCell(-1);
+    cell[1].innerHTML = '<button id="play_'+fileB+'_Btn" class="playButton" rel="'+fileB+'">Guitar B</button>';
+    testInstance.addAudio(testIdx, fileB, fileB);
+
+    cell[2] = row.insertCell(-1);
+
+    row  = tab.insertRow(-1);
+    cell[0] = row.insertCell(-1);
+    cell[1] = row.insertCell(-1);
+    cell[2] = row.insertCell(-1);
+    cell[2].innerHTML = text 
+
+    row[1]  = tab.insertRow(-1);
+    cell[0] = row[1].insertCell(-1);
+    cell[1] = row[1].insertCell(-1);
+    cell[2] = row[1].insertCell(-1);
+    
+    // append the created table to the DOM
+    $('#testElementsContainer').append(tab);
+}
+
 
 // implement specific code
 TimbreTest.prototype.createTestDOM = function (TestIdx) {
 
         // clear old test table
-        if ($('#TableContainer > table')) {
-            $('#TableContainer > table').remove();
+        if ($('#testElementsContainer')) {
+            $('#testElementsContainer').remove();
         }
 
-        // clear old test table
-        if ($('#dissimilaritySliderContainer')) {
-            $('#dissimilaritySliderContainer').remove();
-        }
-
-        if ($('#testInstructions')) {
-            $('#testInstructions').remove();
-        }
-
-        if ($('#dissimilarityInstructions')) {
-            $('#dissimilarityInstructions').remove();
-        }
+        // Create div to hold elements of test such as sliders and buttons
+        var div = document.createElement('div')
+        div.setAttribute("id", "testElementsContainer")
+        $('#TableContainer').append(div);
 
         // Create test instructions
         var div = document.createElement('div')
         div.setAttribute('id', 'testInstructions')
-        div.append("Listen and compare the recordings of the two guitars for each of the three styles and answer the questions. You can listen to the recordings as many times as you wish. Do not change the sound level during the study except if strictly necessary. You are encouraged to use the full range of the scales. Avoid taking breaks in the middle of rating a pair.")
-        $('#TableContainer').append(div);
-
-        // create new test table
-        var tab = document.createElement('table');
-        tab.setAttribute('id','TestTable');
-            
-        var fileID = "";
-        var row = new Array();
-        var cell = new Array();
-
+        div.append("Listen and compare the recordings of the two guitars for each of the three styles and answer the questions. You can listen to the recordings as many times as you wish. Please listen to the entire audio for each guitar style. Do not change the sound level during the study except if strictly necessary. You are encouraged to use the full range of the scales. Avoid taking breaks in the middle of rating a pair.")
+        $('#testElementsContainer').append(div);
 
         // create random file mapping if not yet done
         if (!this.TestState.FileMappings[TestIdx]) {
            this.TestState.FileMappings[TestIdx] = {"A_picking": "", "B_picking": "", "A_strumming": "", "B_strumming": "", "A_fingerstlye": "", "B_fingerstlye": "", "guitar_A": "", "guitar_B": ""};
            var RandFileNumber = Math.random();
            if (this.TestConfig.RandomizeFileOrder && RandFileNumber>0.5) {
-               console.log('Flipping files')
                this.TestState.FileMappings[TestIdx].A_picking = "B_picking";
                this.TestState.FileMappings[TestIdx].B_picking = "A_picking";
                this.TestState.FileMappings[TestIdx].A_strumming = "B_strumming";
@@ -1667,7 +1274,6 @@ TimbreTest.prototype.createTestDOM = function (TestIdx) {
                this.TestState.FileMappings[TestIdx].guitar_B = this.TestConfig.Testsets[TestIdx].Guitars.A;
 
            } else {
-               console.log('Not flipping files')
                this.TestState.FileMappings[TestIdx].A_picking = "A_picking";
                this.TestState.FileMappings[TestIdx].B_picking = "B_picking";
                this.TestState.FileMappings[TestIdx].A_strumming = "A_strumming";
@@ -1678,171 +1284,28 @@ TimbreTest.prototype.createTestDOM = function (TestIdx) {
                this.TestState.FileMappings[TestIdx].guitar_B = this.TestConfig.Testsets[TestIdx].Guitars.B;
             }         
         }	
-        
-        // add reference
-        row  = tab.insertRow(-1);
-        cell[0] = row.insertCell(-1);
-        cell[0].innerHTML = "Guitar A"; 
 
-        cell[1] = row.insertCell(-1);
-        cell[1].innerHTML = "Guitar B"; 
+        // Picking 
+        createLabel(document, "Style: Picking")
+        createButtons(this, this.TestState.FileMappings[TestIdx].A_picking, this.TestState.FileMappings[TestIdx].B_picking, TestIdx)
+        createSlider(document, "dissimilaritySliderPicking", "Please rate how dissimilar/similar the timbres of the two guitars are", "Strongly dissimilar", "Strongly similar")
+        createSlider(document, "preferenceSliderPicking", "Please rate which guitar you prefer more", "Prefer guitar A", "Prefer guitar B")
 
-        row  = tab.insertRow(-1);
-        cell[0] = row.insertCell(-1);
-        fileID = this.TestState.FileMappings[TestIdx].A_picking;
-        cell[0].innerHTML = '<button id="play_'+fileID+'_Btn" class="playButton" rel="'+fileID+'" clicked="false">Picking</button>';
-        this.addAudio(TestIdx, fileID, fileID);
+        // Fingerstyle 
+        createLabel(document, "Style: Fingerstyle")
+        createButtons(this, this.TestState.FileMappings[TestIdx].A_fingerstyle, this.TestState.FileMappings[TestIdx].B_fingerstyle, TestIdx)
+        createSlider(document, "dissimilaritySliderFingerstyle", "Please rate how dissimilar/similar the timbres of the two guitars are", "Strongly dissimilar", "Strongly similar")
+        createSlider(document, "preferenceSliderFingerstyle", "Please rate which guitar you prefer more", "Prefer guitar A", "Prefer guitar B")
 
-        fileID = this.TestState.FileMappings[TestIdx].B_picking;
-        cell[1] = row.insertCell(-1);
-        cell[1].innerHTML = '<button id="play_'+fileID+'_Btn" class="playButton" rel="'+fileID+'">Picking</button>';
-        this.addAudio(TestIdx, fileID, fileID);
+        // Strumming 
+        createLabel(document, "Style: Strumming")
+        createButtons(this, this.TestState.FileMappings[TestIdx].A_strumming, this.TestState.FileMappings[TestIdx].B_strumming, TestIdx)
+        createSlider(document, "dissimilaritySliderStrumming", "Please rate how dissimilar/similar the timbres of the two guitars are", "Strongly dissimilar", "Strongly similar")
+        createSlider(document, "preferenceSliderStrumming", "Please rate which guitar you prefer more", "Prefer guitar A", "Prefer guitar B")
 
-        cell[2] = row.insertCell(-1);
-        
-        cell[3] = row.insertCell(-1);
-        cell[3].innerHTML = "<button class='stopButton'>Stop</button>";
-
-        row  = tab.insertRow(-1);
-        cell[0] = row.insertCell(-1);
-        fileID = this.TestState.FileMappings[TestIdx].A_strumming;
-        cell[0].innerHTML = '<button id="play_'+fileID+'_Btn" class="playButton" rel="'+fileID+'">Strumming</button>';
-        this.addAudio(TestIdx, fileID, fileID);
-
-        fileID = this.TestState.FileMappings[TestIdx].B_strumming;
-        cell[1] = row.insertCell(-1);
-        cell[1].innerHTML = '<button id="play_'+fileID+'_Btn" class="playButton" rel="'+fileID+'">Strumming</button>';
-        this.addAudio(TestIdx, fileID, fileID);
-
-        cell[2] = row.insertCell(-1);
-        
-        cell[3] = row.insertCell(-1);
-        cell[3].innerHTML = "Press buttons to start/stop playback."; 
-
-        row  = tab.insertRow(-1);
-        cell[0] = row.insertCell(-1);
-        fileID = this.TestState.FileMappings[TestIdx].A_fingerstyle;
-        cell[0].innerHTML = '<button id="play_'+fileID+'_Btn" class="playButton" rel="'+fileID+'">Fingerstyle</button>';
-        this.addAudio(TestIdx, fileID, fileID);
-
-        fileID = this.TestState.FileMappings[TestIdx].B_fingerstyle;
-        cell[1] = row.insertCell(-1);
-        cell[1].innerHTML = '<button id="play_'+fileID+'_Btn" class="playButton" rel="'+fileID+'">Fingerstyle</button>';
-        this.addAudio(TestIdx, fileID, fileID);
- 
-        row[1]  = tab.insertRow(-1);
-        cell[0] = row[1].insertCell(-1);
-        cell[1] = row[1].insertCell(-1);
-        cell[2] = row[1].insertCell(-1);
-        cell[3] = row[1].insertCell(-1);
-       
-        // add spacing
-        row = tab.insertRow(-1);
-        row.setAttribute("height","10");  
-
- 
-
-        // append the created table to the DOM
-        $('#TableContainer').append(tab);
-
-        div = document.createElement('div')
-        div.setAttribute("id", "dissimilarityInstructions")
-        div.append("Please rate how dissimilar/similar the timbres of the two guitars are")
-        $('#TableContainer').append(div);
-
-        var slider = document.createElement('div')
-        slider.setAttribute('class', 'slidecontainer')
-        slider.setAttribute('id', 'dissimilaritySliderContainer')
-        var sliderInput = document.createElement('input')
-        sliderInput.setAttribute('type', 'range')
-        sliderInput.setAttribute('min', '0')
-        sliderInput.setAttribute('max', '100')
-        sliderInput.setAttribute('value', '50')
-        sliderInput.setAttribute('class', 'slider')
-        sliderInput.setAttribute('list', 'tickmarks')
-        sliderInput.setAttribute('id', 'dissimilaritySlider')
-
-        // Create datalist (is there a better way to do this?)
-        var datalist = document.createElement('datalist')
-        datalist.setAttribute('id', 'tickmarks')
-        var option1 = document.createElement('option')
-        option1.setAttribute('value', '0')
-        option1.setAttribute('label', 'Strongly dissimilar')
-        var option2 = document.createElement('option')
-        option2.setAttribute('value', '50')
-        var option3 = document.createElement('option')
-        option3.setAttribute('value', '100')
-        option3.setAttribute('label', 'Strongly similar')
-        datalist.append(option1)
-        datalist.append(option2)
-        datalist.append(option3)
-
-        slider.append(sliderInput)
-        slider.append(datalist)
-        $('#TableContainer').append(slider);
-
-        // Table here for comment inputs for the next two questions
-
-        // create new comment table
-        tab = document.createElement('table');
-        tab.setAttribute('id','commentTable1');
-        row = new Array();
-        cell = new Array();
-
-        // add spacing
-        row = tab.insertRow(-1);
-        row.setAttribute("height","10");  
-
-        row  = tab.insertRow(-1);
-        cell[0] = row.insertCell(-1);
-        cell[1] = row.insertCell(-1);
-        cell[0].innerHTML = "Please describe the timbre of guitar A"
-        cell[1].innerHTML = "Please describe the timbre of guitar B"
-
-        row[1] = tab.insertRow(-1);
-        cell[0] = row[1].insertCell(-1);
-        cell[0].innerHTML = '<textarea class="commentbox" id="dissimilarityComment1">'
-        cell[1] = row[1].insertCell(-1);
-        cell[1].innerHTML = '<textarea class="commentbox" id="dissimilarityComment2">'
-
-        // add spacing
-        row = tab.insertRow(-1);
-        row.setAttribute("height","30");  
-
-        row[1] = tab.insertRow(-1);
-        cell[0] = row[1].insertCell(-1);
-        cell[0].setAttribute("colspan", "2")
-        cell[0].innerHTML = 'Please rate how much you like the timbre of Guitar A'
         
 
-        row[1] = tab.insertRow(-1);
-        cell[0] = row[1].insertCell(-1);
-        cell[0].setAttribute("colspan", "2")
-        cell[0].innerHTML = '<input type="range" min="0" max="100" value="50" list="preferenceTickmarks1" class="slider" id="guitarPreference1"><datalist id="preferenceTickmarks1"><option value="0" label="Do not like at all"></option><option value="50"></option><option value="100" label="Like very much"></option></datalist>'
-
-        row[1] = tab.insertRow(-1);
-        cell[0] = row[1].insertCell(-1);
-        cell[0].setAttribute("colspan", "2")
-        cell[0].innerHTML = 'Please rate how much you like the timbre of Guitar B'
-
-
-        row[1] = tab.insertRow(-1);
-        cell[0] = row[1].insertCell(-1);
-        cell[0].setAttribute("colspan", "2")
-        cell[0].innerHTML = '<input type="range" min="0" max="100" value="50" list="preferenceTickmarks2" class="slider" id="guitarPreference2"><datalist id="preferenceTickmarks2"><option value="0" label="Do not like at all"></option><option value="50"></option><option value="100" label="Like very much"></option></datalist>'
-
-        row[1] = tab.insertRow(-1);
-        cell[0] = row[1].insertCell(-1);
-        cell[0].innerHTML = 'What makes you dislike/like the timbre of Guitar A?'
-        cell[1] = row[1].insertCell(-1);
-        cell[1].innerHTML = 'What makes you dislike/like the timbre of Guitar B?'
-        row[1] = tab.insertRow(-1);
-        cell[0] = row[1].insertCell(-1);
-        cell[0].innerHTML = '<textarea class="commentbox" id="timbreComment1">'
-        cell[1] = row[1].insertCell(-1);
-        cell[1].innerHTML = '<textarea class="commentbox" id="timbreComment2">'
-        
-        $('#TableContainer').append(tab);
+     
 }
 
 
@@ -1852,42 +1315,44 @@ TimbreTest.prototype.readRatings = function (TestIdx) {
     var results = this.TestState.Ratings[TestIdx]
 
     // Fill all input objects with results
-    $("#dissimilaritySlider").val(results.dissimilarityValue)
-    $("#guitarPreference1").val(results.guitarPreference1)
-    $("#guitarPreference2").val(results.guitarPreference2)
-    $("#dissimilarityComment1").val(results.dissimilarityComment1)
-    $("#dissimilarityComment2").val(results.dissimilarityComment2)
-    $("#timbreComment1").val(results.timbreComment1)
-    $("#timbreComment2").val(results.timbreComment2)
+    $("#dissimilaritySliderPicking").val(results.dissimilarityPickingValue)
+    $("#preferenceSliderPicking").val(results.preferencePickingValue)
+    $("#dissimilaritySliderStrumming").val(results.dissimilarityStrummingValue)
+    $("#preferenceSliderStrumming").val(results.preferenceStrummingValue)
+    $("#dissimilaritySliderFingerstyle").val(results.dissimilarityFingerstyleValue)
+    $("#preferenceSliderFingerstyle").val(results.preferenceFingerstyleValue)
+
 }
 
 TimbreTest.prototype.saveRatings = function (TestIdx) {
     
     // Creat object to hold results
     var results = {
-        dissimilarityValue: $("#dissimilaritySlider").val(),
-        guitarPreference1: $("#guitarPreference1").val(),
-        guitarPreference2: $("#guitarPreference2").val(),
-        dissimilarityComment1: $("#dissimilarityComment1").val(),
-        dissimilarityComment2: $("#dissimilarityComment2").val(),
-        timbreComment1: $("#timbreComment1").val(),
-        timbreComment2: $("#timbreComment2").val(),
+        dissimilarityPickingValue: $("#dissimilaritySliderPicking").val(),
+        preferencePickingValue: $("#preferenceSliderPicking").val(),
+        dissimilarityStrummingValue: $("#dissimilaritySliderStrumming").val(),
+        preferenceStrummingValue: $("#preferenceSliderStrumming").val(),
+        dissimilarityFingerstyleValue: $("#dissimilaritySliderFingerstyle").val(),
+        preferenceFingerstyleValue: $("#preferenceSliderFingerstyle").val()
     }
-
-    // Get slider values
-    var dissimilarityValue = $("#dissimilaritySlider").val()
-    var guitarPreference1 = $("#guitarPreference1").val()
-    var guitarPreference2 = $("#guitarPreference2").val()
-
-    // Get comment values
-    var dissimilarityComment1 = $("#dissimilarityComment1").val()
-    var dissimilarityComment2 = $("#dissimilarityComment2").val()
-    var timbreComment1 = $("#timbreComment1").val()
-    var timbreComment2 = $("#timbreComment2").val()
 
     // Save results
     this.TestState.Ratings[TestIdx] = results;
+}
 
+TimbreTest.prototype.checkTestElements = function () {
+    // Check if all audio has been listened to, all sliders clicked and text boxes filled
+    if (this.TestState.AllAudioListened[this.TestState.CurrentTest] < 6) {
+        alert("Please ensure you have listened to every sound example before continuing.")
+        return(false)
+    } else if (this.TestState.AllSlidersClicked[this.TestState.CurrentTest] < 6) {
+        if (!confirm("You have not used all of the sliders. Are you sure you would like to continue with 1 or more sliders set to the default value?")) {
+            return(false)
+        } else {
+            this.TestState.AllSlidersClicked[this.TestState.CurrentTest] = 3
+        }
+    }
+    return(true)
 }
 
 TimbreTest.prototype.formatResults = function () {
@@ -1909,32 +1374,189 @@ TimbreTest.prototype.formatResults = function () {
         this.TestState.EvalResults[i].TestID = this.TestConfig.Testsets[i].TestID;
 
         // Save all results
-        this.TestState.EvalResults[i].dissimilarityValue = this.TestState.Ratings[i].dissimilarityValue / 100;
-        this.TestState.EvalResults[i].guitarPreference1 = this.TestState.Ratings[i].guitarPreference1 / 100;
-        this.TestState.EvalResults[i].guitarPreference2 = this.TestState.Ratings[i].guitarPreference2 / 100;
-        this.TestState.EvalResults[i].dissimilarityComment1 = this.TestState.Ratings[i].dissimilarityComment1
-        this.TestState.EvalResults[i].dissimilarityComment2 = this.TestState.Ratings[i].dissimilarityComment2;
-        this.TestState.EvalResults[i].timbreComment1 = this.TestState.Ratings[i].timbreComment1;
-        this.TestState.EvalResults[i].timbreComment2 = this.TestState.Ratings[i].timbreComment2;
+        this.TestState.EvalResults[i].dissimilarityPickingValue = this.TestState.Ratings[i].dissimilarityPickingValue / 100;
+        this.TestState.EvalResults[i].preferencePickingValue = this.TestState.Ratings[i].preferencePickingValue / 100;
+        this.TestState.EvalResults[i].dissimilarityStrummingValue = this.TestState.Ratings[i].dissimilarityStrummingValue / 100;
+        this.TestState.EvalResults[i].preferenceStrummingValue = this.TestState.Ratings[i].preferenceStrummingValue / 100;
+        this.TestState.EvalResults[i].dissimilarityFingerstyleValue = this.TestState.Ratings[i].dissimilarityFingerstyleValue / 100;
+        this.TestState.EvalResults[i].preferenceFingerstyleValue = this.TestState.Ratings[i].preferenceFingerstyleValue / 100;
         this.TestState.EvalResults[i].guitar_A = this.TestState.FileMappings[i].guitar_A;
         this.TestState.EvalResults[i].guitar_B = this.TestState.FileMappings[i].guitar_B;
 
-        // Display table (is this really neccesary??)
-        if (this.TestState.TestSequence.indexOf(i)>=0) {
-            row  = tab.insertRow(-1);
-            cell = row.insertCell(-1);
-            cell.innerHTML = this.TestConfig.Testsets[i].Name + "("+this.TestConfig.Testsets[i].TestID+")";
-            cell = row.insertCell(-1);
-            cell.innerHTML = this.TestState.EvalResults[i].guitar_A;
-            cell = row.insertCell(-1);
-            cell.innerHTML = this.TestState.EvalResults[i].guitar_B;
-            cell = row.insertCell(-1);
-            cell.innerHTML = this.TestState.EvalResults[i].dissimilarityValue;
-            cell = row.insertCell(-1);
-            cell.innerHTML = this.TestState.EvalResults[i].guitarPreference1; 
-            cell = row.insertCell(-1);
-            cell.innerHTML = this.TestState.EvalResults[i].guitarPreference2;
+    }
+    resultstring += tab.outerHTML;
+    return resultstring;
+}
+
+
+
+
+// ###################################################################
+// Preference test main object (modelled after Preference-Test)
+
+// inherit from ListeningTest
+function TimbrePreferenceTest(TestData) {
+    ListeningTest.apply(this, arguments);
+}
+TimbrePreferenceTest.prototype = new ListeningTest();
+TimbrePreferenceTest.prototype.constructor = TimbrePreferenceTest;
+
+// implement specific code
+TimbrePreferenceTest.prototype.createTestDOM = function (TestIdx) {
+
+        // clear old test table
+        if ($('#testElementsContainer')) {
+            $('#testElementsContainer').remove();
         }
+
+        // Create div to hold elements of test such as sliders and buttons
+        var div = document.createElement('div')
+        div.setAttribute("id", "testElementsContainer")
+        $('#TableContainer').append(div);
+
+        // Create test instructions
+        var div = document.createElement('div')
+        div.setAttribute('id', 'testInstructions')
+        div.append("Listen and compare the recordings of the two guitars for each of the three styles and answer the questions. You can listen to the recordings as many times as you wish. Please listen to the entire audio for each guitar style. Do not change the sound level during the study except if strictly necessary. You are encouraged to use the full range of the scales. Avoid taking breaks in the middle of rating a pair.")
+        $('#testElementsContainer').append(div);
+
+        // create random file mapping if not yet done
+        if (!this.TestState.FileMappings[TestIdx]) {
+           this.TestState.FileMappings[TestIdx] = {"A_picking": "", "B_picking": "", "A_strumming": "", "B_strumming": "", "A_fingerstlye": "", "B_fingerstlye": "", "guitar_A": "", "guitar_B": ""};
+           var RandFileNumber = Math.random();
+           if (this.TestConfig.RandomizeFileOrder && RandFileNumber>0.5) {
+               this.TestState.FileMappings[TestIdx].A_picking = "B_picking";
+               this.TestState.FileMappings[TestIdx].B_picking = "A_picking";
+               this.TestState.FileMappings[TestIdx].A_strumming = "B_strumming";
+               this.TestState.FileMappings[TestIdx].B_strumming = "A_strumming";
+               this.TestState.FileMappings[TestIdx].A_fingerstyle = "B_fingerstyle";
+               this.TestState.FileMappings[TestIdx].B_fingerstyle = "A_fingerstyle";
+               this.TestState.FileMappings[TestIdx].guitar_A = this.TestConfig.Testsets[TestIdx].Guitars.B;
+               this.TestState.FileMappings[TestIdx].guitar_B = this.TestConfig.Testsets[TestIdx].Guitars.A;
+
+           } else {
+               this.TestState.FileMappings[TestIdx].A_picking = "A_picking";
+               this.TestState.FileMappings[TestIdx].B_picking = "B_picking";
+               this.TestState.FileMappings[TestIdx].A_strumming = "A_strumming";
+               this.TestState.FileMappings[TestIdx].B_strumming = "B_strumming";
+               this.TestState.FileMappings[TestIdx].A_fingerstyle = "A_fingerstyle";
+               this.TestState.FileMappings[TestIdx].B_fingerstyle = "B_fingerstyle";
+               this.TestState.FileMappings[TestIdx].guitar_A = this.TestConfig.Testsets[TestIdx].Guitars.A;
+               this.TestState.FileMappings[TestIdx].guitar_B = this.TestConfig.Testsets[TestIdx].Guitars.B;
+            }         
+        }	
+
+
+    var tab = document.createElement('table');
+    tab.setAttribute('id','TestTable');
+        
+    var row = new Array();
+    var cell = new Array();
+
+    row  = tab.insertRow(-1);
+    cell[0] = row.insertCell(-1);
+    var fileA = this.TestState.FileMappings[TestIdx].A_picking
+    cell[0].innerHTML = '<button id="play_'+fileA+'_Btn" class="playButton" rel="'+fileA+'" clicked="false">Picking</button>';
+    this.addAudio(TestIdx, fileA, fileA);
+
+    cell[1] = row.insertCell(-1);
+    cell[1].innerHTML = "<button class='stopButton'>Stop</button>";
+
+    row  = tab.insertRow(-1);
+    cell[0] = row.insertCell(-1);
+    fileA = this.TestState.FileMappings[TestIdx].A_strumming
+    cell[0].innerHTML = '<button id="play_'+fileA+'_Btn" class="playButton" rel="'+fileA+'" clicked="false">Strumming</button>';
+    this.addAudio(TestIdx, fileA, fileA);
+
+    
+    cell[1] = row.insertCell(-1);
+    cell[1].innerHTML = "Press buttons to start/stop playback."; 
+
+    row  = tab.insertRow(-1);
+    cell[0] = row.insertCell(-1);
+    fileA = this.TestState.FileMappings[TestIdx].A_fingerstyle
+    cell[0].innerHTML = '<button id="play_'+fileA+'_Btn" class="playButton" rel="'+fileA+'" clicked="false">Fingerstyle</button>';
+    this.addAudio(TestIdx, fileA, fileA);
+
+    row[1]  = tab.insertRow(-1);
+    cell[0] = row[1].insertCell(-1);
+    cell[1] = row[1].insertCell(-1);
+    
+    // append the created table to the DOM
+    $('#testElementsContainer').append(tab);
+
+
+    // Create text boxes
+    createLabel(document, "Please describe the timbre of this guitar in your own words")
+    var div = document.createElement('div')
+    div.setAttribute("class", "textbox")
+    var textbox = document.createElement('textarea')
+    textbox.setAttribute("id", "timbreComment")
+    div.append(textbox)
+    $('#testElementsContainer').append(div);
+}
+
+
+TimbrePreferenceTest.prototype.readRatings = function (TestIdx) {
+
+    // Get results
+    var results = this.TestState.Ratings[TestIdx]
+
+    // Fill all input objects with results
+    $("#timbreComment").val(results.timbreComment)
+}
+
+TimbrePreferenceTest.prototype.saveRatings = function (TestIdx) {
+    
+    // Creat object to hold results
+    var results = {
+        timbreComment: $("#timbreComment").val(),
+    }
+
+    // Save results
+    this.TestState.Ratings[TestIdx] = results;
+}
+
+TimbrePreferenceTest.prototype.checkTestElements = function () {
+    
+    // Check if all audio has been listened to, all sliders clicked and text boxes filled
+    if (this.TestState.AllAudioListened[this.TestState.CurrentTest] < 3) {
+        alert("Please ensure you have listened to every sound example before continuing.")
+        return(false)
+    } 
+    
+    return(true)
+}
+
+
+TimbrePreferenceTest.prototype.formatResults = function () {
+
+    var resultstring = "";
+    var tab = document.createElement('table');
+    var head = tab.createTHead();
+    var row = head.insertRow(-1);
+    var cell = row.insertCell(-1); cell.innerHTML = "Test Name and ID";
+    cell = row.insertCell(-1);     cell.innerHTML = "Guitar A";
+    cell = row.insertCell(-1);     cell.innerHTML = "Guitar B";
+    cell = row.insertCell(-1);     cell.innerHTML = "Dissimilarity rating";
+    cell = row.insertCell(-1);     cell.innerHTML = "Guitar A rating";
+    cell = row.insertCell(-1);     cell.innerHTML = "Guitar B rating";
+
+    // evaluate single tests
+    for (var i = 0; i < this.TestConfig.Testsets.length; i++) {
+        this.TestState.EvalResults[i] = new Object();
+        this.TestState.EvalResults[i].TestID = this.TestConfig.Testsets[i].TestID;
+
+        // Save all results
+        this.TestState.EvalResults[i].dissimilarityPickingValue = this.TestState.Ratings[i].dissimilarityPickingValue / 100;
+        this.TestState.EvalResults[i].preferencePickingValue = this.TestState.Ratings[i].preferencePickingValue / 100;
+        this.TestState.EvalResults[i].dissimilarityStrummingValue = this.TestState.Ratings[i].dissimilarityStrummingValue / 100;
+        this.TestState.EvalResults[i].preferenceStrummingValue = this.TestState.Ratings[i].preferenceStrummingValue / 100;
+        this.TestState.EvalResults[i].dissimilarityFingerstyleValue = this.TestState.Ratings[i].dissimilarityFingerstyleValue / 100;
+        this.TestState.EvalResults[i].preferenceFingerstyleValue = this.TestState.Ratings[i].preferenceFingerstyleValue / 100;
+        this.TestState.EvalResults[i].guitar_A = this.TestState.FileMappings[i].guitar_A;
+        this.TestState.EvalResults[i].guitar_B = this.TestState.FileMappings[i].guitar_B;
+
     }
     resultstring += tab.outerHTML;
     return resultstring;

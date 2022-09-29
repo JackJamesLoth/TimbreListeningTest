@@ -29,13 +29,8 @@
     /* <![CDATA[ */
         var testHandle;
         window.onload=function() {
-
-            // Uncomment one of the following lines to choose the desired test class
-
-            //testHandle = new MushraTest(TestConfig);    // <-- MUSHRA test class
-            //testHandle = new AbxTest(TestConfig);     // <-- ABX test class
-            //testHandle = new PrefTest(TestConfig);
             testHandle = new TimbreTest(TestConfig);
+            //testHandle = new TimbrePreferenceTest(TestConfig);
 
             $('#Footer').prepend(testHandle.browserFeatureString() + '<br/>');
         };
@@ -71,7 +66,7 @@
             <br />
             Instructions:
             <ul>
-                <li>Audio samples from two different aoustic guitars will be presented, played in three different styles</li>
+                <li>Audio samples from two different acoustic guitars will be presented, played in three different styles</li>
                 <li>Listen through all of the audio files before responding to the questions in the form.</li>
                 <li>Fill out the questions in the form to the best of your ability, comparing the two different guitar timbres.</li>
                 <li>Please ensure that the form is completely filled out before moving on to the next test.</li>
