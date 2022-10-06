@@ -583,6 +583,7 @@ $.extend({ alert: function (message, title) {
           "BeaqleServiceURL": "",
           "SupervisorContact": "",
           "RandomizeTestOrder": false,
+          "UseTestOrder": false,
           "MaxTestsPerRun": -1,
           "AudioRoot": ""
         }
@@ -601,10 +602,15 @@ $.extend({ alert: function (message, title) {
     // ###################################################################
     ListeningTest.prototype.nextTest = function() {
 
+        
+
         this.pauseAllAudios();
 
-            if (!this.testIsOver) {
-                var testIdx = this.TestState.TestSequence[this.TestState.CurrentTest]
+        if (!this.testIsOver) {
+
+            console.log(this.TestState)
+
+            var testIdx = this.TestState.TestSequence[this.TestState.CurrentTest]
 
             // save ratings from last test
             if (this.saveRatings(testIdx)==false)
@@ -687,6 +693,10 @@ $.extend({ alert: function (message, title) {
             this.TestState.TestSequence[i] = i;
 
         // shorten and/or shuffle the sequence
+        if (this.TestConfig.UseTestOrder == true) {
+            this.TestState.TestSequence = this.TestConfig.TestOrder
+            console.log(this.TestState)
+        }
         if ((this.TestConfig.MaxTestsPerRun > 0) && (this.TestConfig.MaxTestsPerRun < this.TestConfig.Testsets.length)) {
             this.TestConfig.RandomizeTestOrder = true;
             this.TestState.TestSequence = shuffleArray(this.TestState.TestSequence);
@@ -981,7 +991,9 @@ $.extend({ alert: function (message, title) {
         // Create JSON object for results
         var EvalResults = {};
         EvalResults.Stage1Results = this.TestState.EvalResults.Stage1Results
+        EvalResults.Stage1Order = this.TestState.Stage1Order
         EvalResults.Stage2Results = this.TestState.EvalResults.Stage2Results
+        EvalResults.Stage2Order = this.TestState.TestSequence
         EvalResults.UserObj = UserObj
 
         var testHandle = this;
@@ -1607,6 +1619,7 @@ TimbrePreferenceTest.prototype.endOfTest = function () {
 
     // Add to test state of next test
     testHandle2.TestState.Stage1Results = stage1Results
+    testHandle2.TestState.Stage1Order = this.TestState.TestSequence
     
     //$('#TestEnd').hide();
     $('#TestIntroduction').show();

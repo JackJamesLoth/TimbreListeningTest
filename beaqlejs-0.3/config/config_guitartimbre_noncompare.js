@@ -8,6 +8,8 @@ var TestConfigStage1 = {
     "EnableOnlineSubmission": true,
     "RandomizeFileOrder": false,
     "RandomizeTestOrder": false,
+    "UseTestOrder": true,
+    "TestOrder": [0, 1, 9, 2, 8, 3, 7, 4, 6, 5],
     "BeaqleServiceURL": "web_service/beaqleJS_Service.php",
     "SupervisorContact": "j.j.loth@qmul.ac.uk",
     "AudioRoot": "audio/",
