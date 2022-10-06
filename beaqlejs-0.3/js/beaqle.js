@@ -485,8 +485,11 @@ $.extend({ alert: function (message, title) {
             "AllAudioListened": [],
             "AllSlidersClicked": [],
             "AudiosInLoadQueue": -1,
-            "AudioLoadError": false
+            "AudioLoadError": false,
+            "TestStage": 1
         }
+
+        this.testIsOver = false;
 
 
         // create and configure audio pool
@@ -503,7 +506,7 @@ $.extend({ alert: function (message, title) {
 
         // show introduction div
         $('#TestTitle').html(this.TestConfig.TestName);
-        $('#TestIntroduction').show();
+        this.showInstructions();
         
         // setup buttons and controls
         var handlerObject = this;
@@ -591,91 +594,84 @@ $.extend({ alert: function (message, title) {
     }
 
     // ###################################################################
+    ListeningTest.prototype.setStage = function(stage) {
+        this.TestState.TestStage = stage;
+    }
+
+    // ###################################################################
     ListeningTest.prototype.nextTest = function() {
 
         this.pauseAllAudios();
-        
-        var testIdx = this.TestState.TestSequence[this.TestState.CurrentTest]
 
-        // save ratings from last test
-        if (this.saveRatings(testIdx)==false)
-            return;
+            if (!this.testIsOver) {
+                var testIdx = this.TestState.TestSequence[this.TestState.CurrentTest]
 
-        if (this.checkTestElements() == false){
-            return;
-        }
+            // save ratings from last test
+            if (this.saveRatings(testIdx)==false)
+                return;
 
-        // Save temporary version of test state
-
-        // stop time measurement
-        var stopTime = new Date().getTime();
-        this.TestState.Runtime[this.TestState.TestSequence[this.TestState.CurrentTest]] += stopTime - this.TestState.startTime;
-
-        // go to next test
-        if (this.TestState.CurrentTest<this.TestState.TestSequence.length-1) {
-            this.TestState.CurrentTest = this.TestState.CurrentTest+1;
-
-            // Save test state as cookie
-            saveTestState(this.TestState)
-
-        	this.runTest(this.TestState.TestSequence[this.TestState.CurrentTest]);
-        } else {
-            // if previous test was last one, ask before loading final page and then exit test
-            if (confirm('This was the last test. Do you want to finish?')) {
-
-                deleteTestState()
-            
-                $('#TableContainer').hide();
-                $('#PlayerControls').hide();
-                $('#TestControls').hide();
-                $('#TestEnd').show();
-
-                $('#ResultsBox').html(this.formatResults());
-                if (this.TestConfig.ShowResults)
-                    $("#ResultsBox").show();
-                else
-                    $("#ResultsBox").hide();
-
-                $("#SubmitBox").show();
-
-                $("#SubmitBox > .submitEmail").hide();
-                if (this.TestConfig.EnableOnlineSubmission) {
-                    $("#SubmitBox > .submitOnline").show();
-                    $("#SubmitBox > .submitDownload").hide();
-                } else {
-                    $("#SubmitBox > .submitOnline").hide();
-                    if (this.TestConfig.SupervisorContact) {
-                        $("#SubmitBox > .submitEmail").show();
-                        $(".supervisorEmail").html(this.TestConfig.SupervisorContact);
-                    }
-                    if (this.browserFeatures.webAPIs['Blob']) {
-                        $("#SubmitBox > .submitDownload").show();
-                    } else {
-                        $("#SubmitBox > .submitDownload").hide();
-                        $("#ResultsBox").show();
-                    }
-                }
+            if (this.checkTestElements() == false){
+                return;
             }
-            return;
+
+            // Save temporary version of test state
+
+            // stop time measurement
+            var stopTime = new Date().getTime();
+            this.TestState.Runtime[this.TestState.TestSequence[this.TestState.CurrentTest]] += stopTime - this.TestState.startTime;
+
+            // go to next test
+            if (this.TestState.CurrentTest<this.TestState.TestSequence.length-1) {
+                this.TestState.CurrentTest = this.TestState.CurrentTest+1;
+
+                // Save test state as cookie
+                saveTestState(this.TestState)
+
+                this.runTest(this.TestState.TestSequence[this.TestState.CurrentTest]);
+            } else {
+                // if previous test was last one, ask before loading final page and then exit test
+                if (confirm('This was the last test. Do you want to finish?')) {
+
+
+
+                    // Delete cookies
+                    deleteTestState()
+
+                    this.formatResults()
+                    this.endOfTest();
+
+                    
+                    $('#TableContainer').hide();
+                    $('#PlayerControls').hide();
+                    $('#TestControls').hide();
+                }
+                return;
+            }
         }
+        
+        
+
+        
     }
 
     // ###################################################################
     ListeningTest.prototype.prevTest = function() {
 
-        this.pauseAllAudios();
+        if (!this.testIsOver) {
+            this.pauseAllAudios();
 
-        if (this.TestState.CurrentTest>0) {
-            // save ratings from last test
-            if (this.saveRatings(this.TestState.TestSequence[this.TestState.CurrentTest])==false)
-                return;
-
-            // stop time measurement
-            var stopTime = new Date().getTime();
-            this.TestState.Runtime[this.TestState.TestSequence[this.TestState.CurrentTest]] += stopTime - this.TestState.startTime;
-            // go to previous test
-            this.TestState.CurrentTest = this.TestState.CurrentTest-1;
-        	this.runTest(this.TestState.TestSequence[this.TestState.CurrentTest]);
+            if (this.TestState.CurrentTest>0) {
+                // save ratings from last test
+                if (this.saveRatings(this.TestState.TestSequence[this.TestState.CurrentTest])==false)
+                    return;
+    
+                // stop time measurement
+                var stopTime = new Date().getTime();
+                this.TestState.Runtime[this.TestState.TestSequence[this.TestState.CurrentTest]] += stopTime - this.TestState.startTime;
+                // go to previous test
+                this.TestState.CurrentTest = this.TestState.CurrentTest-1;
+                this.runTest(this.TestState.TestSequence[this.TestState.CurrentTest]);
+            }
         }
     }
 
@@ -727,86 +723,84 @@ $.extend({ alert: function (message, title) {
     // prepares display to run test with number TestIdx
     ListeningTest.prototype.runTest = function(TestIdx) {
 
-        if (!this.TestState.AudioListenedLength[TestIdx]) {
-            this.TestState.AudioListenedLength[TestIdx] = {"A_picking": 0, "B_picking": 0, "A_strumming": 0, "B_strumming": 0, "A_fingerstlye": 0, "B_fingerstlye": 0, "guitar_A": 0, "guitar_B": 0};
+        if (!this.TestIsOver) {
+
+            if (!this.TestState.AudioListenedLength[TestIdx]) {
+                this.TestState.AudioListenedLength[TestIdx] = {"A_picking": 0, "B_picking": 0, "A_strumming": 0, "B_strumming": 0, "A_fingerstyle": 0, "B_fingerstlye": 0, "guitar_A": 0, "guitar_B": 0};
+            }
+
+            this.pauseAllAudios();
+
+            if ((TestIdx<0) || (TestIdx>this.TestConfig.Testsets.length)) throw new RangeError("Test index out of range!");
+
+            this.audioPool.clear();
+            this.TestState.AudiosInLoadQueue = 0;
+            this.TestState.AudioLoadError = false;
+
+            this.createTestDOM(TestIdx);
+
+            // set current test name
+            $('#TestHeading').html(this.TestConfig.Testsets[TestIdx].Name + " (" + (this.TestState.CurrentTest+1) + " of " + this.TestState.TestSequence.length + ")");
+            //$('#TestHeading').html(" Test " + (this.TestState.CurrentTest+1) + " of " + this.TestState.TestSequence.length);
+            $('#TestHeading').show();
+
+            // hide everything instead of load animation
+            $('#TestIntroduction').hide();
+            $('#TestControls').hide();
+            $('#TableContainer').hide();
+            $('#PlayerControls').hide();
+            $('#LoadOverlay').show();
+                    
+            // set some state variables
+            this.TestState.TestIsRunning = 1;
+
+            var TestState = this.TestState
+
+            var handlerObject = this;
+            $('.stopButton').each( function() {
+                $(this).button();
+                $(this).on('click', $.proxy(handlerObject.pauseAllAudios, handlerObject));
+            });
+            
+            $('.playButton').each( function() {
+                
+
+                $(this).button();
+                var audioID = $(this).attr('rel');
+                var thisButton = this;
+                
+                $(this).on('click', $.proxy(function(event) {
+                    
+                    var clicked = $(thisButton).attr('clicked') === 'true';
+                    handlerObject.playAudio(audioID)
+                    if (!clicked) {
+                        thisButton.setAttribute('clicked', 'true')
+                        
+                        this.TestState.AllAudioListened[this.TestState.CurrentTest]++
+                    }
+                }, handlerObject));
+            });
+
+            $('.slider').each( function() {
+                var thisSlider = this;
+                
+                // When slider is clicked
+                $(this).on('click', $.proxy(function(event) {
+                    var clicked = $(thisSlider).attr('clicked') === 'true';
+                    if (!clicked) {
+                        
+                        thisSlider.setAttribute('clicked', 'true')
+                        TestState.AllSlidersClicked[TestState.CurrentTest]++
+                        
+                    }
+                }))
+            });
+                
+            // load and apply already existing ratings
+            if (typeof this.TestState.Ratings[TestIdx] !== 'undefined') this.readRatings(TestIdx);
+
+            this.TestState.startTime = new Date().getTime();
         }
-        
-
-        console.log(this.TestState)
-
-        
-
-        this.pauseAllAudios();
-
-        if ((TestIdx<0) || (TestIdx>this.TestConfig.Testsets.length)) throw new RangeError("Test index out of range!");
-
-        this.audioPool.clear();
-        this.TestState.AudiosInLoadQueue = 0;
-        this.TestState.AudioLoadError = false;
-
-        this.createTestDOM(TestIdx);
-
-        // set current test name
-        $('#TestHeading').html(this.TestConfig.Testsets[TestIdx].Name + " (" + (this.TestState.CurrentTest+1) + " of " + this.TestState.TestSequence.length + ")");
-        //$('#TestHeading').html(" Test " + (this.TestState.CurrentTest+1) + " of " + this.TestState.TestSequence.length);
-        $('#TestHeading').show();
-
-        // hide everything instead of load animation
-        $('#TestIntroduction').hide();
-        $('#TestControls').hide();
-        $('#TableContainer').hide();
-        $('#PlayerControls').hide();
-        $('#LoadOverlay').show();
-                
-        // set some state variables
-        this.TestState.TestIsRunning = 1;
-
-        var TestState = this.TestState
-
-        var handlerObject = this;
-        $('.stopButton').each( function() {
-            $(this).button();
-            $(this).on('click', $.proxy(handlerObject.pauseAllAudios, handlerObject));
-        });
-        
-        $('.playButton').each( function() {
-            
-
-            $(this).button();
-            var audioID = $(this).attr('rel');
-            var thisButton = this;
-            
-            $(this).on('click', $.proxy(function(event) {
-                
-                var clicked = $(thisButton).attr('clicked') === 'true';
-                handlerObject.playAudio(audioID)
-                if (!clicked) {
-                    thisButton.setAttribute('clicked', 'true')
-                    
-                    this.TestState.AllAudioListened[this.TestState.CurrentTest]++
-                }
-            }, handlerObject));
-        });
-
-        $('.slider').each( function() {
-            var thisSlider = this;
-            
-            // When slider is clicked
-            $(this).on('click', $.proxy(function(event) {
-                var clicked = $(thisSlider).attr('clicked') === 'true';
-                if (!clicked) {
-                    
-                    thisSlider.setAttribute('clicked', 'true')
-                    TestState.AllSlidersClicked[TestState.CurrentTest]++
-                    
-                }
-            }))
-        });
-            
-        // load and apply already existing ratings
-        if (typeof this.TestState.Ratings[TestIdx] !== 'undefined') this.readRatings(TestIdx);
-
-        this.TestState.startTime = new Date().getTime();
     }
 
     // ###################################################################
@@ -842,7 +836,14 @@ $.extend({ alert: function (message, title) {
     // Test specific checks before moving to the next test
     ListeningTest.prototype.checkTestElements = function () {
         // overwrite and implement in inherited class
-        alert('Function formatResults() has not been implemented in your inherited class!');
+        alert('Function checkTestElements() has not been implemented in your inherited class!');
+    }
+
+    // ###################################################################
+    // Decides what to do at end of test
+    ListeningTest.prototype.endOfTest = function () {
+        // overwrite and implement in inherited class
+        alert('Function endOfTest() has not been implemented in your inherited class!');
     }
 
     // ###################################################################
@@ -850,6 +851,13 @@ $.extend({ alert: function (message, title) {
     ListeningTest.prototype.createTestDOM = function (TestIdx) {
         // overwrite and implement in inherited class
         alert('Function createTestDOM() has not been implemented in your inherited class!');
+    }
+
+    // ###################################################################
+    // Show correct instructions for test
+    ListeningTest.prototype.showInstructions = function () {
+        // overwrite and implement in inherited class
+        alert('Function showInstructions() has not been implemented in your inherited class!');
     }
 
     // ###################################################################
@@ -914,16 +922,9 @@ $.extend({ alert: function (message, title) {
     // Called when someone pauses the audio
     ListeningTest.prototype.audioPausedCallback = function(audioID, time) {
 
-        console.log(audioID)
-        console.log(time)
-        console.log(this.TestState)
-
-        
         if (this.TestState.AudioListenedLength[this.TestState.TestSequence[this.TestState.CurrentTest]][audioID] < time) {
             this.TestState.AudioListenedLength[this.TestState.TestSequence[this.TestState.CurrentTest]][audioID] = time
         }
-        
-
     }
 
     // ###################################################################
@@ -977,10 +978,12 @@ $.extend({ alert: function (message, title) {
             return;
         }
 
-        var EvalResults = this.TestState.EvalResults;        
-        EvalResults.push(UserObj)
-        EvalResults.push(this.TestState.AudioListenedLength)
-        
+        // Create JSON object for results
+        var EvalResults = {};
+        EvalResults.Stage1Results = this.TestState.EvalResults.Stage1Results
+        EvalResults.Stage2Results = this.TestState.EvalResults.Stage2Results
+        EvalResults.UserObj = UserObj
+
         var testHandle = this;
         $.ajax({
                     type: "POST",
@@ -1261,7 +1264,7 @@ TimbreTest.prototype.createTestDOM = function (TestIdx) {
 
         // create random file mapping if not yet done
         if (!this.TestState.FileMappings[TestIdx]) {
-           this.TestState.FileMappings[TestIdx] = {"A_picking": "", "B_picking": "", "A_strumming": "", "B_strumming": "", "A_fingerstlye": "", "B_fingerstlye": "", "guitar_A": "", "guitar_B": ""};
+           this.TestState.FileMappings[TestIdx] = {"A_picking": "", "B_picking": "", "A_strumming": "", "B_strumming": "", "A_fingerstyle": "", "B_fingerstlye": "", "guitar_A": "", "guitar_B": ""};
            var RandFileNumber = Math.random();
            if (this.TestConfig.RandomizeFileOrder && RandFileNumber>0.5) {
                this.TestState.FileMappings[TestIdx].A_picking = "B_picking";
@@ -1289,23 +1292,19 @@ TimbreTest.prototype.createTestDOM = function (TestIdx) {
         createLabel(document, "Style: Picking")
         createButtons(this, this.TestState.FileMappings[TestIdx].A_picking, this.TestState.FileMappings[TestIdx].B_picking, TestIdx)
         createSlider(document, "dissimilaritySliderPicking", "Please rate how dissimilar/similar the timbres of the two guitars are", "Strongly dissimilar", "Strongly similar")
-        createSlider(document, "preferenceSliderPicking", "Please rate which guitar you prefer more", "Prefer guitar A", "Prefer guitar B")
+        createSlider(document, "preferenceSliderPicking", "Please rate which guitar you prefer more", "Strongly prefer guitar A", "Strongly prefer guitar B")
 
         // Fingerstyle 
         createLabel(document, "Style: Fingerstyle")
         createButtons(this, this.TestState.FileMappings[TestIdx].A_fingerstyle, this.TestState.FileMappings[TestIdx].B_fingerstyle, TestIdx)
         createSlider(document, "dissimilaritySliderFingerstyle", "Please rate how dissimilar/similar the timbres of the two guitars are", "Strongly dissimilar", "Strongly similar")
-        createSlider(document, "preferenceSliderFingerstyle", "Please rate which guitar you prefer more", "Prefer guitar A", "Prefer guitar B")
+        createSlider(document, "preferenceSliderFingerstyle", "Please rate which guitar you prefer more", "Strongly prefer guitar A", "Strongly prefer guitar B")
 
         // Strumming 
         createLabel(document, "Style: Strumming")
         createButtons(this, this.TestState.FileMappings[TestIdx].A_strumming, this.TestState.FileMappings[TestIdx].B_strumming, TestIdx)
         createSlider(document, "dissimilaritySliderStrumming", "Please rate how dissimilar/similar the timbres of the two guitars are", "Strongly dissimilar", "Strongly similar")
-        createSlider(document, "preferenceSliderStrumming", "Please rate which guitar you prefer more", "Prefer guitar A", "Prefer guitar B")
-
-        
-
-     
+        createSlider(document, "preferenceSliderStrumming", "Please rate which guitar you prefer more", "Strongly prefer guitar A", "Strongly prefer guitar B")
 }
 
 
@@ -1321,7 +1320,6 @@ TimbreTest.prototype.readRatings = function (TestIdx) {
     $("#preferenceSliderStrumming").val(results.preferenceStrummingValue)
     $("#dissimilaritySliderFingerstyle").val(results.dissimilarityFingerstyleValue)
     $("#preferenceSliderFingerstyle").val(results.preferenceFingerstyleValue)
-
 }
 
 TimbreTest.prototype.saveRatings = function (TestIdx) {
@@ -1341,6 +1339,7 @@ TimbreTest.prototype.saveRatings = function (TestIdx) {
 }
 
 TimbreTest.prototype.checkTestElements = function () {
+    
     // Check if all audio has been listened to, all sliders clicked and text boxes filled
     if (this.TestState.AllAudioListened[this.TestState.CurrentTest] < 6) {
         alert("Please ensure you have listened to every sound example before continuing.")
@@ -1368,26 +1367,80 @@ TimbreTest.prototype.formatResults = function () {
     cell = row.insertCell(-1);     cell.innerHTML = "Guitar A rating";
     cell = row.insertCell(-1);     cell.innerHTML = "Guitar B rating";
 
+    this.TestState.EvalResults.Stage2Results = [];
+
     // evaluate single tests
     for (var i = 0; i < this.TestConfig.Testsets.length; i++) {
-        this.TestState.EvalResults[i] = new Object();
-        this.TestState.EvalResults[i].TestID = this.TestConfig.Testsets[i].TestID;
+        this.TestState.EvalResults.Stage2Results[i] = new Object();
+        this.TestState.EvalResults.Stage2Results[i].TestID = this.TestConfig.Testsets[i].TestID;
 
         // Save all results
-        this.TestState.EvalResults[i].dissimilarityPickingValue = this.TestState.Ratings[i].dissimilarityPickingValue / 100;
-        this.TestState.EvalResults[i].preferencePickingValue = this.TestState.Ratings[i].preferencePickingValue / 100;
-        this.TestState.EvalResults[i].dissimilarityStrummingValue = this.TestState.Ratings[i].dissimilarityStrummingValue / 100;
-        this.TestState.EvalResults[i].preferenceStrummingValue = this.TestState.Ratings[i].preferenceStrummingValue / 100;
-        this.TestState.EvalResults[i].dissimilarityFingerstyleValue = this.TestState.Ratings[i].dissimilarityFingerstyleValue / 100;
-        this.TestState.EvalResults[i].preferenceFingerstyleValue = this.TestState.Ratings[i].preferenceFingerstyleValue / 100;
-        this.TestState.EvalResults[i].guitar_A = this.TestState.FileMappings[i].guitar_A;
-        this.TestState.EvalResults[i].guitar_B = this.TestState.FileMappings[i].guitar_B;
+        this.TestState.EvalResults.Stage2Results[i].dissimilarityPickingValue = this.TestState.Ratings[i].dissimilarityPickingValue / 100;
+        this.TestState.EvalResults.Stage2Results[i].preferencePickingValue = this.TestState.Ratings[i].preferencePickingValue / 100;
+        this.TestState.EvalResults.Stage2Results[i].dissimilarityStrummingValue = this.TestState.Ratings[i].dissimilarityStrummingValue / 100;
+        this.TestState.EvalResults.Stage2Results[i].preferenceStrummingValue = this.TestState.Ratings[i].preferenceStrummingValue / 100;
+        this.TestState.EvalResults.Stage2Results[i].dissimilarityFingerstyleValue = this.TestState.Ratings[i].dissimilarityFingerstyleValue / 100;
+        this.TestState.EvalResults.Stage2Results[i].preferenceFingerstyleValue = this.TestState.Ratings[i].preferenceFingerstyleValue / 100;
+        this.TestState.EvalResults.Stage2Results[i].guitar_A = this.TestState.FileMappings[i].guitar_A;
+        this.TestState.EvalResults.Stage2Results[i].guitar_B = this.TestState.FileMappings[i].guitar_B;
 
+        // Audio listened length
+        this.TestState.EvalResults.Stage2Results[i].pickingTimeA = this.TestState.AudioListenedLength[i].A_picking;
+        this.TestState.EvalResults.Stage2Results[i].pickingTimeB = this.TestState.AudioListenedLength[i].B_picking;
+        this.TestState.EvalResults.Stage2Results[i].strummingTimeA = this.TestState.AudioListenedLength[i].A_strumming;
+        this.TestState.EvalResults.Stage2Results[i].strummingTimeB = this.TestState.AudioListenedLength[i].B_strumming;
+        this.TestState.EvalResults.Stage2Results[i].fingerstyleTimeA = this.TestState.AudioListenedLength[i].A_fingerstyle;
+        this.TestState.EvalResults.Stage2Results[i].fingerstyleTimeB = this.TestState.AudioListenedLength[i].B_fingerstyle;
     }
+
+    // Save Stage 1 results
+    this.TestState.EvalResults.Stage1Results = this.TestState.Stage1Results;
+
     resultstring += tab.outerHTML;
     return resultstring;
 }
 
+TimbreTest.prototype.endOfTest = function () {
+    
+    $('#TableContainer').hide();
+    $('#PlayerControls').hide();
+    $('#TestControls').hide();
+    
+    $('#TestEnd').show();
+
+    $('#ResultsBox').html(this.formatResults());
+    if (this.TestConfig.ShowResults)
+        $("#ResultsBox").show();
+    else
+        $("#ResultsBox").hide();
+
+    $("#SubmitBox").show();
+
+    $("#SubmitBox > .submitEmail").hide();
+    if (this.TestConfig.EnableOnlineSubmission) {
+        $("#SubmitBox > .submitOnline").show();
+        $("#SubmitBox > .submitDownload").hide();
+    } else {
+        $("#SubmitBox > .submitOnline").hide();
+        if (this.TestConfig.SupervisorContact) {
+            $("#SubmitBox > .submitEmail").show();
+            $(".supervisorEmail").html(this.TestConfig.SupervisorContact);
+        }
+        if (this.browserFeatures.webAPIs['Blob']) {
+            $("#SubmitBox > .submitDownload").show();
+        } else {
+            $("#SubmitBox > .submitDownload").hide();
+            $("#ResultsBox").show();
+        }
+    }
+    
+}
+
+TimbreTest.prototype.showInstructions = function () {
+    $('#TestIntroduction').show();
+    $('#Stage1Instructions').hide();
+    $('#Stage2Instructions').show();
+}
 
 
 
@@ -1404,48 +1457,21 @@ TimbrePreferenceTest.prototype.constructor = TimbrePreferenceTest;
 // implement specific code
 TimbrePreferenceTest.prototype.createTestDOM = function (TestIdx) {
 
-        // clear old test table
-        if ($('#testElementsContainer')) {
-            $('#testElementsContainer').remove();
-        }
+    // clear old test table
+    if ($('#testElementsContainer')) {
+        $('#testElementsContainer').remove();
+    }
 
-        // Create div to hold elements of test such as sliders and buttons
-        var div = document.createElement('div')
-        div.setAttribute("id", "testElementsContainer")
-        $('#TableContainer').append(div);
+    // Create div to hold elements of test such as sliders and buttons
+    var div = document.createElement('div')
+    div.setAttribute("id", "testElementsContainer")
+    $('#TableContainer').append(div);
 
-        // Create test instructions
-        var div = document.createElement('div')
-        div.setAttribute('id', 'testInstructions')
-        div.append("Listen and compare the recordings of the two guitars for each of the three styles and answer the questions. You can listen to the recordings as many times as you wish. Please listen to the entire audio for each guitar style. Do not change the sound level during the study except if strictly necessary. You are encouraged to use the full range of the scales. Avoid taking breaks in the middle of rating a pair.")
-        $('#testElementsContainer').append(div);
-
-        // create random file mapping if not yet done
-        if (!this.TestState.FileMappings[TestIdx]) {
-           this.TestState.FileMappings[TestIdx] = {"A_picking": "", "B_picking": "", "A_strumming": "", "B_strumming": "", "A_fingerstlye": "", "B_fingerstlye": "", "guitar_A": "", "guitar_B": ""};
-           var RandFileNumber = Math.random();
-           if (this.TestConfig.RandomizeFileOrder && RandFileNumber>0.5) {
-               this.TestState.FileMappings[TestIdx].A_picking = "B_picking";
-               this.TestState.FileMappings[TestIdx].B_picking = "A_picking";
-               this.TestState.FileMappings[TestIdx].A_strumming = "B_strumming";
-               this.TestState.FileMappings[TestIdx].B_strumming = "A_strumming";
-               this.TestState.FileMappings[TestIdx].A_fingerstyle = "B_fingerstyle";
-               this.TestState.FileMappings[TestIdx].B_fingerstyle = "A_fingerstyle";
-               this.TestState.FileMappings[TestIdx].guitar_A = this.TestConfig.Testsets[TestIdx].Guitars.B;
-               this.TestState.FileMappings[TestIdx].guitar_B = this.TestConfig.Testsets[TestIdx].Guitars.A;
-
-           } else {
-               this.TestState.FileMappings[TestIdx].A_picking = "A_picking";
-               this.TestState.FileMappings[TestIdx].B_picking = "B_picking";
-               this.TestState.FileMappings[TestIdx].A_strumming = "A_strumming";
-               this.TestState.FileMappings[TestIdx].B_strumming = "B_strumming";
-               this.TestState.FileMappings[TestIdx].A_fingerstyle = "A_fingerstyle";
-               this.TestState.FileMappings[TestIdx].B_fingerstyle = "B_fingerstyle";
-               this.TestState.FileMappings[TestIdx].guitar_A = this.TestConfig.Testsets[TestIdx].Guitars.A;
-               this.TestState.FileMappings[TestIdx].guitar_B = this.TestConfig.Testsets[TestIdx].Guitars.B;
-            }         
-        }	
-
+    // Create test instructions
+    var div = document.createElement('div')
+    div.setAttribute('id', 'testInstructions')
+    div.append("Listen and compare the recordings of the two guitars for each of the three styles and answer the questions. You can listen to the recordings as many times as you wish. Please listen to the entire audio for each guitar style. Do not change the sound level during the study except if strictly necessary. You are encouraged to use the full range of the scales. Avoid taking breaks in the middle of rating a pair.")
+    $('#testElementsContainer').append(div);
 
     var tab = document.createElement('table');
     tab.setAttribute('id','TestTable');
@@ -1455,7 +1481,7 @@ TimbrePreferenceTest.prototype.createTestDOM = function (TestIdx) {
 
     row  = tab.insertRow(-1);
     cell[0] = row.insertCell(-1);
-    var fileA = this.TestState.FileMappings[TestIdx].A_picking
+    var fileA = "A_picking"
     cell[0].innerHTML = '<button id="play_'+fileA+'_Btn" class="playButton" rel="'+fileA+'" clicked="false">Picking</button>';
     this.addAudio(TestIdx, fileA, fileA);
 
@@ -1464,18 +1490,17 @@ TimbrePreferenceTest.prototype.createTestDOM = function (TestIdx) {
 
     row  = tab.insertRow(-1);
     cell[0] = row.insertCell(-1);
-    fileA = this.TestState.FileMappings[TestIdx].A_strumming
-    cell[0].innerHTML = '<button id="play_'+fileA+'_Btn" class="playButton" rel="'+fileA+'" clicked="false">Strumming</button>';
+    fileA = "A_fingerstyle"
+    cell[0].innerHTML = '<button id="play_'+fileA+'_Btn" class="playButton" rel="'+fileA+'" clicked="false">Fingerstyle</button>';
     this.addAudio(TestIdx, fileA, fileA);
-
     
     cell[1] = row.insertCell(-1);
     cell[1].innerHTML = "Press buttons to start/stop playback."; 
 
     row  = tab.insertRow(-1);
     cell[0] = row.insertCell(-1);
-    fileA = this.TestState.FileMappings[TestIdx].A_fingerstyle
-    cell[0].innerHTML = '<button id="play_'+fileA+'_Btn" class="playButton" rel="'+fileA+'" clicked="false">Fingerstyle</button>';
+    fileA = "A_strumming"
+    cell[0].innerHTML = '<button id="play_'+fileA+'_Btn" class="playButton" rel="'+fileA+'" clicked="false">Strumming</button>';
     this.addAudio(TestIdx, fileA, fileA);
 
     row[1]  = tab.insertRow(-1);
@@ -1484,7 +1509,6 @@ TimbrePreferenceTest.prototype.createTestDOM = function (TestIdx) {
     
     // append the created table to the DOM
     $('#testElementsContainer').append(tab);
-
 
     // Create text boxes
     createLabel(document, "Please describe the timbre of this guitar in your own words")
@@ -1508,7 +1532,7 @@ TimbrePreferenceTest.prototype.readRatings = function (TestIdx) {
 
 TimbrePreferenceTest.prototype.saveRatings = function (TestIdx) {
     
-    // Creat object to hold results
+    // Create object to hold results
     var results = {
         timbreComment: $("#timbreComment").val(),
     }
@@ -1517,15 +1541,18 @@ TimbrePreferenceTest.prototype.saveRatings = function (TestIdx) {
     this.TestState.Ratings[TestIdx] = results;
 }
 
+// Check if all audio has been listened to and text boxes filled
 TimbrePreferenceTest.prototype.checkTestElements = function () {
-    
-    // Check if all audio has been listened to, all sliders clicked and text boxes filled
-    if (this.TestState.AllAudioListened[this.TestState.CurrentTest] < 3) {
-        alert("Please ensure you have listened to every sound example before continuing.")
-        return(false)
-    } 
-    
-    return(true)
+    if (!this.testIsOver) {
+        if (this.TestState.AllAudioListened[this.TestState.CurrentTest] < 3) {
+            alert("Please ensure you have listened to every sound example before continuing.")
+            return(false)
+        } else if ( $("#timbreComment").val().length == 0) {
+            alert("Please ensure you have filled in the text box before continuing")
+            return(false)
+        }
+        return(true)
+    }
 }
 
 
@@ -1548,17 +1575,52 @@ TimbrePreferenceTest.prototype.formatResults = function () {
         this.TestState.EvalResults[i].TestID = this.TestConfig.Testsets[i].TestID;
 
         // Save all results
-        this.TestState.EvalResults[i].dissimilarityPickingValue = this.TestState.Ratings[i].dissimilarityPickingValue / 100;
-        this.TestState.EvalResults[i].preferencePickingValue = this.TestState.Ratings[i].preferencePickingValue / 100;
-        this.TestState.EvalResults[i].dissimilarityStrummingValue = this.TestState.Ratings[i].dissimilarityStrummingValue / 100;
-        this.TestState.EvalResults[i].preferenceStrummingValue = this.TestState.Ratings[i].preferenceStrummingValue / 100;
-        this.TestState.EvalResults[i].dissimilarityFingerstyleValue = this.TestState.Ratings[i].dissimilarityFingerstyleValue / 100;
-        this.TestState.EvalResults[i].preferenceFingerstyleValue = this.TestState.Ratings[i].preferenceFingerstyleValue / 100;
-        this.TestState.EvalResults[i].guitar_A = this.TestState.FileMappings[i].guitar_A;
-        this.TestState.EvalResults[i].guitar_B = this.TestState.FileMappings[i].guitar_B;
+        this.TestState.EvalResults[i].timbreComment = this.TestState.Ratings[i].timbreComment;
+        this.TestState.EvalResults[i].guitar_A = this.TestConfig.Testsets[i].Guitars.A;
+
 
     }
     resultstring += tab.outerHTML;
     return resultstring;
 }
 
+TimbrePreferenceTest.prototype.endOfTest = function () {
+    
+    testHandle2 = new TimbreTest(TestConfigStage2);
+    testHandle2.setStage(2)
+
+    var stage1Results = [];
+    // evaluate single tests
+    for (var i = 0; i < this.TestConfig.Testsets.length; i++) {
+        stage1Results[i] = new Object();
+        stage1Results[i].TestID = this.TestConfig.Testsets[i].TestID;
+
+        // Save all results
+        stage1Results[i].timbreComment = this.TestState.Ratings[i].timbreComment;
+        stage1Results[i].guitar = this.TestConfig.Testsets[i].Guitars.A;
+
+        // Audio listened length
+        stage1Results[i].pickingTime = this.TestState.AudioListenedLength[i].A_picking
+        stage1Results[i].strummingTime = this.TestState.AudioListenedLength[i].A_strumming
+        stage1Results[i].fingerstyleTime = this.TestState.AudioListenedLength[i].A_fingerstyle
+    }
+
+    // Add to test state of next test
+    testHandle2.TestState.Stage1Results = stage1Results
+    
+    //$('#TestEnd').hide();
+    $('#TestIntroduction').show();
+    $('#Footer').prepend(testHandle2.browserFeatureString() + '<br/>');
+
+    // Update button to start the second set of tests
+    $('#BtnStartTest').on('click', function() {
+        testHandle.testIsOver = true;
+        testHandle2.startTests();
+    })
+}
+
+TimbrePreferenceTest.prototype.showInstructions = function () {
+    $('#TestIntroduction').show();
+    $('#Stage1Instructions').show();
+    $('#Stage2Instructions').hide();
+}

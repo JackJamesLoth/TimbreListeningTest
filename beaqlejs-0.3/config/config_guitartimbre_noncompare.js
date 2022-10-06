@@ -1,6 +1,6 @@
 // configure the test here
-var TestConfig = {
-    "TestName": "Guitar Timbre Listening Study",
+var TestConfigStage1 = {
+    "TestName": "Guitar Timbre Listening Study Stage 1",
     "LoopByDefault": false,
     "ShowFileIDs": false,
     "ShowResults": true,

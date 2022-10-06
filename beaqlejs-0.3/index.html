@@ -14,7 +14,8 @@
     <title>BeaqleJS</title>
     
     <!-- load the test config file -->
-        <script src="config/config_guitartimbre.js" type="text/javascript"></script>
+    <script src="config/config_guitartimbre_short.js" type="text/javascript"></script>
+        <script src="config/config_guitartimbre_noncompare.js" type="text/javascript"></script>
     <!---->
     
     <link type="text/css" href="css/smoothness/jquery-ui-1.8.18.custom.css" rel="Stylesheet" />
@@ -28,11 +29,32 @@
     <script type="text/javascript">
     /* <![CDATA[ */
         var testHandle;
+        var testHandle2;
         window.onload=function() {
-            testHandle = new TimbreTest(TestConfig);
-            //testHandle = new TimbrePreferenceTest(TestConfig);
+
+        var loadedTestState = loadTestState();
+        if (loadedTestState != null) {
+            var tempTestState = structuredClone(loadedTestState)
+            if (tempTestState.TestStage == 1) {
+                testHandle = new TimbrePreferenceTest(TestConfigStage1);
+                testHandle.setStage(1)
+                testHandle.TestState = tempTestState;
+                $('#Footer').prepend(testHandle.browserFeatureString() + '<br/>');
+            } else {
+                testHandle2 = new TimbreTest(TestConfigStage2);
+                testHandle2.setStage(2)
+                testHandle2.TestState = tempTestState;
+                testHandle2.startTests();
+                $('#Footer').prepend(testHandle2.browserFeatureString() + '<br/>');
+            }
+        } else {
+            testHandle = new TimbrePreferenceTest(TestConfigStage1);
+            testHandle.setStage(1)
 
             $('#Footer').prepend(testHandle.browserFeatureString() + '<br/>');
+        }
+
+            
         };
     /* ]]> */
     </script>
@@ -60,8 +82,22 @@
         
         <!-- edit here if you want to change the welcome message  and instructions -->
 
-        <div style="text-align:left">
-            Thanks for your interest in participating in the listening test. The overall test will take roughly 1.5 hours.
+        <div id="Stage1Instructions" style="text-align:left">
+            Thanks for your interest in participating in the listening test. The overall test will take roughly 1.5 hours. This stage will focus on the timbre of individual guitars.
+            <br />
+            <br />
+            Instructions:
+            <ul>
+                <li>Audio samples from an acoustic guitar will be presented, played in three different styles</li>
+                <li>Listen through all of the audio files before responding to the questions in the form.</li>
+                <li>Fill out the questions in the form to the best of your ability</li>
+                <li>Please ensure that the form is completely filled out before moving on to the next test.</li>
+                <li>If you would like a break, let the researcher know. You are welcome to take a break at any point during the test, though avoid taking a break in the middle of rating a pair if possible.</li>
+                <li>DO NOT adjust the volume unless you absolutely need to.</li>
+            </ul>
+        </div>
+        <div id="Stage2Instructions" style="text-align:left">
+            Thanks for your interest in participating in the listening test. The overall test will take roughly 1.5 hours. This stage will focus on comparing the timbre of two different guitars.
             <br />
             <br />
             Instructions:
@@ -108,7 +144,7 @@
             <tr><td></td><td><textarea id="UserComment" cols="40" rows="4">Your feedback...</textarea></td></tr>
             </table>
             <br />
-            <button id="BtnSubmitData" class="submitOnline" onclick="testHandle.SubmitTestResults();">Submit</button>
+            <button id="BtnSubmitData" class="submitOnline" onclick="testHandle2.SubmitTestResults();">Submit</button>
             <button id="BtnDownloadData" class="submitDownload" onclick="testHandle.DownloadTestResults();">Download</button>
             <p class="submitEmail error">
                 <!-- edit here if you want to change the information about email submission, e.g. add privacy policy information -->

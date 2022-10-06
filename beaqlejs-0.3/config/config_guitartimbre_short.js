@@ -1,5 +1,5 @@
 // configure the test here
-var TestConfig = {
+var TestConfigStage2 = {
     "TestName": "Guitar Timbre Listening Study",
     "LoopByDefault": false,
     "ShowFileIDs": false,
@@ -15,6 +15,22 @@ var TestConfig = {
         {
             "Name": "Test 1",
             "TestID": "test_CortEarth100NS_DAngelicoPremierBoweryLS",
+            "Files": {
+                "A_picking": "Cort Earth 100 NS/picking.mp3",
+                "B_picking": "DAngelico Premier Bowery LS/picking.mp3",
+                "A_strumming": "Cort Earth 100 NS/strumming.mp3",
+                "B_strumming": "DAngelico Premier Bowery LS/strumming.mp3",
+                "A_fingerstyle": "Cort Earth 100 NS/fingerstyle.mp3",
+                "B_fingerstyle": "DAngelico Premier Bowery LS/fingerstyle.mp3",
+            },
+            "Guitars": {
+                "A": "Cort Earth 100 NS",
+                "B": "DAngelico Premier Bowery LS",
+            }
+        },
+        {
+            "Name": "Test 2",
+            "TestID": "test_CortEarth100NS_DAngelicwcklnweoPremierBoweryLS",
             "Files": {
                 "A_picking": "Cort Earth 100 NS/picking.mp3",
                 "B_picking": "DAngelico Premier Bowery LS/picking.mp3",
