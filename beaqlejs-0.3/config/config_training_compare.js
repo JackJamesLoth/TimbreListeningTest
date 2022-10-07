@@ -1,6 +1,6 @@
 // configure the test here
-var TestConfig = {
-    "TestName": "TRAINING",
+var TestConfigStage2 = {
+    "TestName": "TRAINING Stage 2",
     "LoopByDefault": false,
     "ShowFileIDs": false,
     "ShowResults": true,
