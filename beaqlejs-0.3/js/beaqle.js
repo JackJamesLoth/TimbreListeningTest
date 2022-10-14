@@ -721,6 +721,9 @@ $.extend({ alert: function (message, title) {
             this.TestState = structuredClone(loadedTestState)
         } else {
             this.TestState.CurrentTest = 0;
+
+            // Save test state to cookies
+            saveTestState(this.TestState)
         }
 
         // run first test
@@ -732,6 +735,8 @@ $.extend({ alert: function (message, title) {
     // ###################################################################    
     // prepares display to run test with number TestIdx
     ListeningTest.prototype.runTest = function(TestIdx) {
+
+        console.log(this.TestState)
 
         if (!this.TestIsOver) {
 
@@ -1450,6 +1455,7 @@ TimbreTest.prototype.endOfTest = function () {
 
 TimbreTest.prototype.showInstructions = function () {
     $('#TestIntroduction').show();
+    $('#TrainingInstructions').hide();
     $('#Stage1Instructions').hide();
     $('#Stage2Instructions').show();
 }
@@ -1634,6 +1640,172 @@ TimbrePreferenceTest.prototype.endOfTest = function () {
 
 TimbrePreferenceTest.prototype.showInstructions = function () {
     $('#TestIntroduction').show();
+    $('#TrainingInstructions').hide();
     $('#Stage1Instructions').show();
     $('#Stage2Instructions').hide();
 }
+
+
+
+// ###################################################################
+// Training
+
+// inherit from ListeningTest
+function TimbreTraining(TestData) {
+    ListeningTest.apply(this, arguments);
+}
+TimbreTraining.prototype = new ListeningTest();
+TimbreTraining.prototype.constructor = TimbreTraining;
+
+// implement specific code
+TimbreTraining.prototype.createTestDOM = function (TestIdx) {
+
+    // clear old test table
+    if ($('#testElementsContainer')) {
+        $('#testElementsContainer').remove();
+    }
+
+    // Create div to hold elements of test such as sliders and buttons
+    var div = document.createElement('div')
+    div.setAttribute("id", "testElementsContainer")
+    $('#TableContainer').append(div);
+
+    // Create test instructions
+    var div = document.createElement('div')
+    div.setAttribute('id', 'testInstructions')
+    div.append("The first stage will involve listening to a single guitar and describing it's timbre. Please listen to all three of the guitar exceprts and use the text box to describe how the timbre sounds")
+    $('#testElementsContainer').append(div);
+
+    var tab = document.createElement('table');
+    tab.setAttribute('id','TestTable');
+        
+    var row = new Array();
+    var cell = new Array();
+
+    row  = tab.insertRow(-1);
+    cell[0] = row.insertCell(-1);
+    var fileA = "C_picking"
+    cell[0].innerHTML = '<button id="play_'+fileA+'_Btn" class="playButton" rel="'+fileA+'" clicked="false">Picking</button>';
+    this.addAudio(TestIdx, fileA, fileA);
+
+    cell[1] = row.insertCell(-1);
+    cell[1].innerHTML = "<button class='stopButton'>Stop</button>";
+
+    row  = tab.insertRow(-1);
+    cell[0] = row.insertCell(-1);
+    fileA = "C_fingerstyle"
+    cell[0].innerHTML = '<button id="play_'+fileA+'_Btn" class="playButton" rel="'+fileA+'" clicked="false">Fingerstyle</button>';
+    this.addAudio(TestIdx, fileA, fileA);
+    
+    cell[1] = row.insertCell(-1);
+    cell[1].innerHTML = "Press buttons to start/stop playback."; 
+
+    row  = tab.insertRow(-1);
+    cell[0] = row.insertCell(-1);
+    fileA = "C_strumming"
+    cell[0].innerHTML = '<button id="play_'+fileA+'_Btn" class="playButton" rel="'+fileA+'" clicked="false">Strumming</button>';
+    this.addAudio(TestIdx, fileA, fileA);
+
+    row[1]  = tab.insertRow(-1);
+    cell[0] = row[1].insertCell(-1);
+    cell[1] = row[1].insertCell(-1);
+    
+    // append the created table to the DOM
+    $('#testElementsContainer').append(tab);
+
+    // Create text box
+    createLabel(document, "Please describe the timbre of this guitar in your own words")
+    var div = document.createElement('div')
+    div.setAttribute("class", "textbox")
+    var textbox = document.createElement('textarea')
+    textbox.setAttribute("id", "timbreComment")
+    div.append(textbox)
+    $('#testElementsContainer').append(div);
+
+
+    // More test instructions
+    var div = document.createElement('div')
+    div.setAttribute('id', 'testInstructions2')
+    div.append("The second stage will involve listening to two different guitars playing the same thing. Please listen to both guitars, then use the sliders to rate how dissimilar/similar you feel the timbre of the two guitars are. Next, use the slider to rate which guitar you prefer the timbre of")
+    $('#testElementsContainer').append(div);
+
+    // Picking 
+    createLabel(document, "Style: Picking")
+    createButtons(this, "A_picking", "B_picking", TestIdx)
+    createSlider(document, "dissimilaritySlider", "Please rate how dissimilar/similar the timbres of the two guitars are", "Strongly dissimilar", "Strongly similar")
+    createSlider(document, "preferenceSlider", "Please rate which guitar you prefer more", "Strongly prefer guitar A", "Strongly prefer guitar B")
+}
+
+
+TimbreTraining.prototype.readRatings = function (TestIdx) {
+
+    // Get results
+    var results = this.TestState.Ratings[TestIdx]
+
+    // Fill all input objects with results
+    $("#timbreComment").val(results.timbreComment)
+    $("#dissimilaritySlider").val(results.differenceRating)
+    $("#preferenceSlider").val(results.preferenceRating)
+}
+
+TimbreTraining.prototype.saveRatings = function (TestIdx) {
+    
+    // Create object to hold results
+    var results = {
+        timbreComment: $("#timbreComment").val(),
+        differenceRating: $("#dissimilaritySlider").val(),
+        preferenceRating: $("#preferenceSlider").val(),
+    }
+
+    // Save results
+    this.TestState.Ratings[TestIdx] = results;
+}
+
+// Check if all audio has been listened to and text boxes filled
+TimbreTraining.prototype.checkTestElements = function () {
+    if (!this.testIsOver) {
+        if (this.TestState.AllAudioListened[this.TestState.CurrentTest] < 5) {
+            alert("Please ensure you have listened to every sound example before continuing.")
+            return(false)
+        } else if ( $("#timbreComment").val().length == 0) {
+            alert("Please ensure you have filled in the text box before continuing")
+            return(false)
+        } else if (this.TestState.AllSlidersClicked[this.TestState.CurrentTest] < 6) {
+            if (!confirm("You have not used all of the sliders. Are you sure you would like to continue with 1 or more sliders set to the default value?")) {
+                return(false)
+            }
+        }
+        return(true)
+    }
+}
+
+
+TimbreTraining.prototype.formatResults = function () {
+
+    
+}
+
+TimbreTraining.prototype.endOfTest = function () {
+    
+    testHandle = new TimbrePreferenceTest(TestConfigStage1);
+    testHandle.setStage(1)
+    
+    //$('#TestEnd').hide();
+    $('#TestIntroduction').show();
+    $('#Footer').prepend(testHandle.browserFeatureString() + '<br/>');
+
+    // Update button to start the second set of tests
+    $('#BtnStartTest').on('click', function() {
+        testHandleTraining.testIsOver = true;
+        testHandle.startTests();
+    })
+}
+
+TimbreTraining.prototype.showInstructions = function () {
+    $('#TestIntroduction').show();
+    $('#TrainingInstructions').show();
+    $('#Stage1Instructions').hide();
+    $('#Stage2Instructions').hide();
+}
+
+
