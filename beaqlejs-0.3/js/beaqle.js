@@ -608,8 +608,6 @@ $.extend({ alert: function (message, title) {
 
         if (!this.testIsOver) {
 
-            console.log(this.TestState)
-
             var testIdx = this.TestState.TestSequence[this.TestState.CurrentTest]
 
             // save ratings from last test
@@ -694,8 +692,8 @@ $.extend({ alert: function (message, title) {
 
         // shorten and/or shuffle the sequence
         if (this.TestConfig.UseTestOrder == true) {
-            this.TestState.TestSequence = this.TestConfig.TestOrder
             console.log(this.TestState)
+            this.TestState.TestSequence = this.TestConfig.TestOrder
         }
         if ((this.TestConfig.MaxTestsPerRun > 0) && (this.TestConfig.MaxTestsPerRun < this.TestConfig.Testsets.length)) {
             this.TestConfig.RandomizeTestOrder = true;
@@ -717,7 +715,7 @@ $.extend({ alert: function (message, title) {
         
         // Get previous test state if it exists
         var loadedTestState = loadTestState();
-        if (loadedTestState != null) {
+        if (loadedTestState != null && loadedTestState.TestStage == this.TestState.TestStage) {
             this.TestState = structuredClone(loadedTestState)
         } else {
             this.TestState.CurrentTest = 0;
@@ -725,6 +723,9 @@ $.extend({ alert: function (message, title) {
             // Save test state to cookies
             saveTestState(this.TestState)
         }
+        
+       
+        console.log(this.TestState)
 
         // run first test
     	this.runTest(this.TestState.TestSequence[this.TestState.CurrentTest]);
@@ -735,8 +736,6 @@ $.extend({ alert: function (message, title) {
     // ###################################################################    
     // prepares display to run test with number TestIdx
     ListeningTest.prototype.runTest = function(TestIdx) {
-
-        console.log(this.TestState)
 
         if (!this.TestIsOver) {
 
@@ -1536,6 +1535,24 @@ TimbrePreferenceTest.prototype.createTestDOM = function (TestIdx) {
     textbox.setAttribute("id", "timbreComment")
     div.append(textbox)
     $('#testElementsContainer').append(div);
+
+    createLabel(document, "Please describe what you LIKE about the timbre of this guitar in your own words")
+    var div = document.createElement('div')
+    div.setAttribute("class", "textbox")
+    var textbox = document.createElement('textarea')
+    textbox.setAttribute("id", "timbreLikeComment")
+    div.append(textbox)
+    $('#testElementsContainer').append(div);
+
+    createLabel(document, "Please describe what you DISLIKE about the timbre of this guitar in your own words")
+    var div = document.createElement('div')
+    div.setAttribute("class", "textbox")
+    var textbox = document.createElement('textarea')
+    textbox.setAttribute("id", "timbreDislikeComment")
+    div.append(textbox)
+    $('#testElementsContainer').append(div);
+
+    console.log(this.TestState)
 }
 
 
@@ -1546,6 +1563,8 @@ TimbrePreferenceTest.prototype.readRatings = function (TestIdx) {
 
     // Fill all input objects with results
     $("#timbreComment").val(results.timbreComment)
+    $("#timbreLikeComment").val(results.timbreLikeComment)
+    $("#timbreDislikeComment").val(results.timbreDislikeComment)
 }
 
 TimbrePreferenceTest.prototype.saveRatings = function (TestIdx) {
@@ -1553,6 +1572,8 @@ TimbrePreferenceTest.prototype.saveRatings = function (TestIdx) {
     // Create object to hold results
     var results = {
         timbreComment: $("#timbreComment").val(),
+        timbreLikeComment: $("#timbreLikeComment").val(),
+        timbreDislikeComment: $("#timbreDislikeComment").val()
     }
 
     // Save results
@@ -1565,8 +1586,8 @@ TimbrePreferenceTest.prototype.checkTestElements = function () {
         if (this.TestState.AllAudioListened[this.TestState.CurrentTest] < 3) {
             alert("Please ensure you have listened to every sound example before continuing.")
             return(false)
-        } else if ( $("#timbreComment").val().length == 0) {
-            alert("Please ensure you have filled in the text box before continuing")
+        } else if ( $("#timbreComment").val().length == 0 || $("#timbreLikeComment").val().length == 0 || $("#timbreDislikeComment").val().length == 0) {
+            alert("Please ensure you have filled in the text boxes before continuing")
             return(false)
         }
         return(true)
@@ -1594,6 +1615,8 @@ TimbrePreferenceTest.prototype.formatResults = function () {
 
         // Save all results
         this.TestState.EvalResults[i].timbreComment = this.TestState.Ratings[i].timbreComment;
+        this.TestState.EvalResults[i].timbreLikeComment = this.TestState.Ratings[i].timbreLikeComment;
+        this.TestState.EvalResults[i].timbreDislikeComment = this.TestState.Ratings[i].timbreDislikeComment;
         this.TestState.EvalResults[i].guitar_A = this.TestConfig.Testsets[i].Guitars.A;
 
 
@@ -1615,6 +1638,8 @@ TimbrePreferenceTest.prototype.endOfTest = function () {
 
         // Save all results
         stage1Results[i].timbreComment = this.TestState.Ratings[i].timbreComment;
+        stage1Results[i].timbreLikeComment = this.TestState.Ratings[i].timbreLikeComment;
+        stage1Results[i].timbreDislikeComment = this.TestState.Ratings[i].timbreDislikeComment;
         stage1Results[i].guitar = this.TestConfig.Testsets[i].Guitars.A;
 
         // Audio listened length
@@ -1629,7 +1654,7 @@ TimbrePreferenceTest.prototype.endOfTest = function () {
     
     //$('#TestEnd').hide();
     $('#TestIntroduction').show();
-    $('#Footer').prepend(testHandle2.browserFeatureString() + '<br/>');
+    //$('#Footer').prepend(testHandle2.browserFeatureString() + '<br/>');
 
     // Update button to start the second set of tests
     $('#BtnStartTest').on('click', function() {
@@ -1739,6 +1764,10 @@ TimbreTraining.prototype.createTestDOM = function (TestIdx) {
 
 TimbreTraining.prototype.readRatings = function (TestIdx) {
 
+    if (this.testIsOver) {
+        return;
+    }
+
     // Get results
     var results = this.TestState.Ratings[TestIdx]
 
@@ -1749,6 +1778,10 @@ TimbreTraining.prototype.readRatings = function (TestIdx) {
 }
 
 TimbreTraining.prototype.saveRatings = function (TestIdx) {
+
+    if (this.testIsOver) {
+        return;
+    }
     
     // Create object to hold results
     var results = {
@@ -1770,7 +1803,7 @@ TimbreTraining.prototype.checkTestElements = function () {
         } else if ( $("#timbreComment").val().length == 0) {
             alert("Please ensure you have filled in the text box before continuing")
             return(false)
-        } else if (this.TestState.AllSlidersClicked[this.TestState.CurrentTest] < 6) {
+        } else if (this.TestState.AllSlidersClicked[this.TestState.CurrentTest] < 2) {
             if (!confirm("You have not used all of the sliders. Are you sure you would like to continue with 1 or more sliders set to the default value?")) {
                 return(false)
             }
@@ -1790,14 +1823,15 @@ TimbreTraining.prototype.endOfTest = function () {
     testHandle = new TimbrePreferenceTest(TestConfigStage1);
     testHandle.setStage(1)
     
+    
     //$('#TestEnd').hide();
     $('#TestIntroduction').show();
-    $('#Footer').prepend(testHandle.browserFeatureString() + '<br/>');
 
     // Update button to start the second set of tests
     $('#BtnStartTest').on('click', function() {
         testHandleTraining.testIsOver = true;
         testHandle.startTests();
+        console.log(testHandle.TestState)
     })
 }
 
