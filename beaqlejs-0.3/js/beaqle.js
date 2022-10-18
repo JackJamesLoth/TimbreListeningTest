@@ -634,7 +634,7 @@ $.extend({ alert: function (message, title) {
                 this.runTest(this.TestState.TestSequence[this.TestState.CurrentTest]);
             } else {
                 // if previous test was last one, ask before loading final page and then exit test
-                if (confirm('This was the last test. Do you want to finish?')) {
+                if (this.finalTest()) {
 
 
 
@@ -858,6 +858,13 @@ $.extend({ alert: function (message, title) {
     ListeningTest.prototype.endOfTest = function () {
         // overwrite and implement in inherited class
         alert('Function endOfTest() has not been implemented in your inherited class!');
+    }
+
+    // ###################################################################
+    // Decides what to do at final test
+    ListeningTest.prototype.finalTest = function () {
+        // overwrite and implement in inherited class
+        alert('Function finalTest() has not been implemented in your inherited class!');
     }
 
     // ###################################################################
@@ -1308,19 +1315,19 @@ TimbreTest.prototype.createTestDOM = function (TestIdx) {
         createLabel(document, "Style: Picking")
         createButtons(this, this.TestState.FileMappings[TestIdx].A_picking, this.TestState.FileMappings[TestIdx].B_picking, TestIdx)
         createSlider(document, "dissimilaritySliderPicking", "Please rate how dissimilar/similar the timbres of the two guitars are", "Strongly dissimilar", "Strongly similar")
-        createSlider(document, "preferenceSliderPicking", "Please rate which guitar you prefer more", "Strongly prefer guitar A", "Strongly prefer guitar B")
+        createSlider(document, "preferenceSliderPicking", "Please rate your preference between the timbres of guitar A and B", "Strongly prefer guitar A", "Strongly prefer guitar B")
 
         // Fingerstyle 
         createLabel(document, "Style: Fingerstyle")
         createButtons(this, this.TestState.FileMappings[TestIdx].A_fingerstyle, this.TestState.FileMappings[TestIdx].B_fingerstyle, TestIdx)
         createSlider(document, "dissimilaritySliderFingerstyle", "Please rate how dissimilar/similar the timbres of the two guitars are", "Strongly dissimilar", "Strongly similar")
-        createSlider(document, "preferenceSliderFingerstyle", "Please rate which guitar you prefer more", "Strongly prefer guitar A", "Strongly prefer guitar B")
+        createSlider(document, "preferenceSliderFingerstyle", "Please rate your preference between the timbres of guitar A and B", "Strongly prefer guitar A", "Strongly prefer guitar B")
 
         // Strumming 
         createLabel(document, "Style: Strumming")
         createButtons(this, this.TestState.FileMappings[TestIdx].A_strumming, this.TestState.FileMappings[TestIdx].B_strumming, TestIdx)
         createSlider(document, "dissimilaritySliderStrumming", "Please rate how dissimilar/similar the timbres of the two guitars are", "Strongly dissimilar", "Strongly similar")
-        createSlider(document, "preferenceSliderStrumming", "Please rate which guitar you prefer more", "Strongly prefer guitar A", "Strongly prefer guitar B")
+        createSlider(document, "preferenceSliderStrumming", "Please rate your preference between the timbres of guitar A and B", "Strongly prefer guitar A", "Strongly prefer guitar B")
 }
 
 
@@ -1459,6 +1466,14 @@ TimbreTest.prototype.showInstructions = function () {
     $('#Stage2Instructions').show();
 }
 
+TimbreTest.prototype.finalTest = function () {
+    if (confirm("This was the last test in Stage 2. Do you want to finish?")) {
+        return true;
+    } else {
+        return false;
+    }
+}
+
 
 
 // ###################################################################
@@ -1487,7 +1502,7 @@ TimbrePreferenceTest.prototype.createTestDOM = function (TestIdx) {
     // Create test instructions
     var div = document.createElement('div')
     div.setAttribute('id', 'testInstructions')
-    div.append("Listen and compare the recordings of the two guitars for each of the three styles and answer the questions. You can listen to the recordings as many times as you wish. Please listen to the entire audio for each guitar style. Do not change the sound level during the study except if strictly necessary. You are encouraged to use the full range of the scales. Avoid taking breaks in the middle of rating a pair.")
+    div.append("Listen to the recordings of the same guitar for three different playing styles (picking, fingerstyle, and strumming) and describe the timbre of the guitar using your own words. Then, describe what you like and what you dislike about the timbre of the guitar in the two separate text boxes. You need to listen to the three guitar recordings entirely. You can listen to the recordings as many times as you wish. Do not change the sound level during the main test except if strictly necessary. Avoid taking breaks in the middle of completing a page.")
     $('#testElementsContainer').append(div);
 
     var tab = document.createElement('table');
@@ -1670,6 +1685,13 @@ TimbrePreferenceTest.prototype.showInstructions = function () {
     $('#Stage2Instructions').hide();
 }
 
+TimbrePreferenceTest.prototype.finalTest = function () {
+    if (confirm("This was the last test in Stage 1. Do you want to continue to the next stage?")) {
+        return true;
+    } else {
+        return false;
+    }
+}
 
 
 // ###################################################################
@@ -1695,70 +1717,106 @@ TimbreTraining.prototype.createTestDOM = function (TestIdx) {
     div.setAttribute("id", "testElementsContainer")
     $('#TableContainer').append(div);
 
-    // Create test instructions
-    var div = document.createElement('div')
-    div.setAttribute('id', 'testInstructions')
-    div.append("The first stage will involve listening to a single guitar and describing it's timbre. Please listen to all three of the guitar exceprts and use the text box to describe how the timbre sounds")
-    $('#testElementsContainer').append(div);
+    if (TestIdx == 0) {
 
-    var tab = document.createElement('table');
-    tab.setAttribute('id','TestTable');
+        // Create test instructions
+        var div = document.createElement('div')
+        div.setAttribute('id', 'testInstructions')
+        div.append("In the first stage of the test, you need to listen to three recordings of a single guitar corresponding to different playing styles (picking, fingerstyle, and strumming) and describe the timbre of the guitar using your own words. You then need to describe what you like and what you dislike about the timbre of this guitar in two separate text boxes. Please listen to the three guitar recordings entirely. You can listen to the recordings as many times as you wish.")
+        $('#testElementsContainer').append(div);
+
+        var tab = document.createElement('table');
+        tab.setAttribute('id','TestTable');
+            
+        var row = new Array();
+        var cell = new Array();
+    
+        row  = tab.insertRow(-1);
+        cell[0] = row.insertCell(-1);
+        var fileA = "A_picking"
+        cell[0].innerHTML = '<button id="play_'+fileA+'_Btn" class="playButton" rel="'+fileA+'" clicked="false">Picking</button>';
+        this.addAudio(TestIdx, fileA, fileA);
+    
+        cell[1] = row.insertCell(-1);
+        cell[1].innerHTML = "<button class='stopButton'>Stop</button>";
+    
+        row  = tab.insertRow(-1);
+        cell[0] = row.insertCell(-1);
+        fileA = "A_fingerstyle"
+        cell[0].innerHTML = '<button id="play_'+fileA+'_Btn" class="playButton" rel="'+fileA+'" clicked="false">Fingerstyle</button>';
+        this.addAudio(TestIdx, fileA, fileA);
         
-    var row = new Array();
-    var cell = new Array();
-
-    row  = tab.insertRow(-1);
-    cell[0] = row.insertCell(-1);
-    var fileA = "C_picking"
-    cell[0].innerHTML = '<button id="play_'+fileA+'_Btn" class="playButton" rel="'+fileA+'" clicked="false">Picking</button>';
-    this.addAudio(TestIdx, fileA, fileA);
-
-    cell[1] = row.insertCell(-1);
-    cell[1].innerHTML = "<button class='stopButton'>Stop</button>";
-
-    row  = tab.insertRow(-1);
-    cell[0] = row.insertCell(-1);
-    fileA = "C_fingerstyle"
-    cell[0].innerHTML = '<button id="play_'+fileA+'_Btn" class="playButton" rel="'+fileA+'" clicked="false">Fingerstyle</button>';
-    this.addAudio(TestIdx, fileA, fileA);
+        cell[1] = row.insertCell(-1);
+        cell[1].innerHTML = "Press buttons to start/stop playback."; 
     
-    cell[1] = row.insertCell(-1);
-    cell[1].innerHTML = "Press buttons to start/stop playback."; 
-
-    row  = tab.insertRow(-1);
-    cell[0] = row.insertCell(-1);
-    fileA = "C_strumming"
-    cell[0].innerHTML = '<button id="play_'+fileA+'_Btn" class="playButton" rel="'+fileA+'" clicked="false">Strumming</button>';
-    this.addAudio(TestIdx, fileA, fileA);
-
-    row[1]  = tab.insertRow(-1);
-    cell[0] = row[1].insertCell(-1);
-    cell[1] = row[1].insertCell(-1);
+        row  = tab.insertRow(-1);
+        cell[0] = row.insertCell(-1);
+        fileA = "A_strumming"
+        cell[0].innerHTML = '<button id="play_'+fileA+'_Btn" class="playButton" rel="'+fileA+'" clicked="false">Strumming</button>';
+        this.addAudio(TestIdx, fileA, fileA);
     
-    // append the created table to the DOM
-    $('#testElementsContainer').append(tab);
+        row[1]  = tab.insertRow(-1);
+        cell[0] = row[1].insertCell(-1);
+        cell[1] = row[1].insertCell(-1);
+        
+        // append the created table to the DOM
+        $('#testElementsContainer').append(tab);
+    
+        // Create text boxes
+        createLabel(document, "Please describe the timbre of this guitar in your own words")
+        var div = document.createElement('div')
+        div.setAttribute("class", "textbox")
+        var textbox = document.createElement('textarea')
+        textbox.setAttribute("id", "timbreComment")
+        div.append(textbox)
+        $('#testElementsContainer').append(div);
+    
+        createLabel(document, "Please describe what you LIKE about the timbre of this guitar in your own words")
+        var div = document.createElement('div')
+        div.setAttribute("class", "textbox")
+        var textbox = document.createElement('textarea')
+        textbox.setAttribute("id", "timbreLikeComment")
+        div.append(textbox)
+        $('#testElementsContainer').append(div);
+    
+        createLabel(document, "Please describe what you DISLIKE about the timbre of this guitar in your own words")
+        var div = document.createElement('div')
+        div.setAttribute("class", "textbox")
+        var textbox = document.createElement('textarea')
+        textbox.setAttribute("id", "timbreDislikeComment")
+        div.append(textbox)
+        $('#testElementsContainer').append(div);
 
-    // Create text box
-    createLabel(document, "Please describe the timbre of this guitar in your own words")
-    var div = document.createElement('div')
-    div.setAttribute("class", "textbox")
-    var textbox = document.createElement('textarea')
-    textbox.setAttribute("id", "timbreComment")
-    div.append(textbox)
-    $('#testElementsContainer').append(div);
+        createLabel(document, "In the main test, you will need to complete this task for 10 different guitars.")
+        
+    } else {
 
+        // Create test instructions
+        var div = document.createElement('div')
+        div.setAttribute('id', 'testInstructions')
+        div.append("In the second stage of the test, you need to listen to recordings of two different guitars playing the same musical excerpt. Please listen to both recording entirely and use the slider to rate how dissimilar/similar you feel the timbres of the two guitars are. Next, use the second slider to rate your preference for the guitar timbres. You can listen to the recordings several times if you wish. This task needs to be completed for the three playing styles separately (picking, fingerstyle, and strumming).")
+        $('#testElementsContainer').append(div);
 
-    // More test instructions
-    var div = document.createElement('div')
-    div.setAttribute('id', 'testInstructions2')
-    div.append("The second stage will involve listening to two different guitars playing the same thing. Please listen to both guitars, then use the sliders to rate how dissimilar/similar you feel the timbre of the two guitars are. Next, use the slider to rate which guitar you prefer the timbre of")
-    $('#testElementsContainer').append(div);
+        // Picking 
+        createLabel(document, "Style: Picking")
+        createButtons(this, "A_picking", "B_picking", TestIdx)
+        createSlider(document, "dissimilaritySliderPicking", "Please rate how dissimilar/similar the timbres of the two guitars are", "Strongly dissimilar", "Strongly similar")
+        createSlider(document, "preferenceSliderPicking", "Please rate your preference between the timbres of guitar A and B", "Strongly prefer guitar A", "Strongly prefer guitar B")
 
-    // Picking 
-    createLabel(document, "Style: Picking")
-    createButtons(this, "A_picking", "B_picking", TestIdx)
-    createSlider(document, "dissimilaritySlider", "Please rate how dissimilar/similar the timbres of the two guitars are", "Strongly dissimilar", "Strongly similar")
-    createSlider(document, "preferenceSlider", "Please rate which guitar you prefer more", "Strongly prefer guitar A", "Strongly prefer guitar B")
+        // Fingerstyle 
+        createLabel(document, "Style: Fingerstyle")
+        createButtons(this, "A_picking", "B_picking", TestIdx)
+        createSlider(document, "dissimilaritySliderFingerstyle", "Please rate how dissimilar/similar the timbres of the two guitars are", "Strongly dissimilar", "Strongly similar")
+        createSlider(document, "preferenceSliderFingerstyle", "Please rate your preference between the timbres of guitar A and B", "Strongly prefer guitar A", "Strongly prefer guitar B")
+
+        // Strumming 
+        createLabel(document, "Style: Strumming")
+        createButtons(this, "A_picking", "B_picking", TestIdx)
+        createSlider(document, "dissimilaritySliderStrumming", "Please rate how dissimilar/similar the timbres of the two guitars are", "Strongly dissimilar", "Strongly similar")
+        createSlider(document, "preferenceSliderStrumming", "Please rate your preference between the timbres of guitar A and B", "Strongly prefer guitar A", "Strongly prefer guitar B")
+
+        createLabel(document, "In the main test, you will need to complete this task for 45 different guitar pairs.")
+    }
 }
 
 
@@ -1796,8 +1854,10 @@ TimbreTraining.prototype.saveRatings = function (TestIdx) {
 
 // Check if all audio has been listened to and text boxes filled
 TimbreTraining.prototype.checkTestElements = function () {
+
+    /*
     if (!this.testIsOver) {
-        if (this.TestState.AllAudioListened[this.TestState.CurrentTest] < 5) {
+        if (this.TestState.AllAudioListened[this.TestState.CurrentTest] < 3) {
             alert("Please ensure you have listened to every sound example before continuing.")
             return(false)
         } else if ( $("#timbreComment").val().length == 0) {
@@ -1810,6 +1870,7 @@ TimbreTraining.prototype.checkTestElements = function () {
         }
         return(true)
     }
+    */
 }
 
 
@@ -1842,4 +1903,11 @@ TimbreTraining.prototype.showInstructions = function () {
     $('#Stage2Instructions').hide();
 }
 
+TimbreTraining.prototype.finalTest = function () {
+    if (confirm("This was the last training test. Do you want to finish?")) {
+        return true;
+    } else {
+        return false;
+    }
+}
 
