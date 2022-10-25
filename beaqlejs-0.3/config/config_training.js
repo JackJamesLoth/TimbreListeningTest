@@ -17,40 +17,28 @@ var TestConfigTraining = {
             "Name": "Test 1",
             "TestID": "test_EpiphoneJ-15ECDeluxeVS",
             "Files": {
-                "C_picking": "Epiphone J-15 EC Deluxe VS/picking.mp3",
-                "C_strumming": "Epiphone J-15 EC Deluxe VS/strumming.mp3",
-                "C_fingerstyle": "Epiphone J-15 EC Deluxe VS/fingerstyle.mp3",
-                "A_picking": "Epiphone J-15 EC Deluxe VS/picking.mp3",
-                "B_picking": "Larry Carlton A3-D VS/picking.mp3",
-                "A_strumming": "Epiphone J-15 EC Deluxe VS/strumming.mp3",
-                "B_strumming": "Larry Carlton A3-D VS/strumming.mp3",
-                "A_fingerstyle": "Epiphone J-15 EC Deluxe VS/fingerstyle.mp3",
-                "B_fingerstyle": "Larry Carlton A3-D VS/fingerstyle.mp3",
+                "A_picking": "TR_epiphone_picking.wav",
+                "A_strumming": "TR_epiphone_strumming.wav",
+                "A_fingerstyle": "TR_epiphone_fingerstyle.wav",
             },
             "Guitars": {
-                "C": "Epiphone J-15 EC Deluxe VS",
-                "A": "Epiphone J-15 EC Deluxe VS",
-                "B": "Larry Carlton A3-D VS",
+                "A": "Epiphone J-15 EC Deluxe VS"
             }
         },
         {
             "Name": "Test 2",
-            "TestID": "test_LarryCarltonA3-DVS",
+            "TestID": "test_Dangelico_Epiphone",
             "Files": {
-                "C_picking": "Larry Carlton A3-D VS/picking.mp3",
-                "C_strumming": "Larry Carlton A3-D VS/strumming.mp3",
-                "C_fingerstyle": "Larry Carlton A3-D VS/fingerstyle.mp3",
-                "A_picking": "Maton EBW70C Blackwood/picking.mp3",
-                "B_picking": "Epiphone Masterbilt Frontier/picking.mp3",
-                "A_strumming": "Maton EBW70C Blackwood/strumming.mp3",
-                "B_strumming": "Epiphone Masterbilt Frontier/strumming.mp3",
-                "A_fingerstyle": "Maton EBW70C Blackwood/fingerstyle.mp3",
-                "B_fingerstyle": "Epiphone Masterbilt Frontier/fingerstyle.mp3",
+                "A_picking": "TR_dangelico_picking.wav",
+                "B_picking": "TR_epiphone_picking.wav",
+                "A_strumming": "TR_dangelico_strumming.wav",
+                "B_strumming": "TR_epiphone_strumming.wav",
+                "A_fingerstyle": "TR_dangelico_fingerstyle.wav",
+                "B_fingerstyle": "TR_epiphone_fingerstyle.wav",
             },
             "Guitars": {
-                "C": "Larry Carlton A3-D VS",
-                "A": "Maton EBW70C Blackwood",
-                "B": "Epiphone Masterbilt Frontier",
+                "A": "DAngelico Premier Bowery ANM",
+                "B": "Epiphone J-15 EC Deluxe VS",
             }
         }
     ]

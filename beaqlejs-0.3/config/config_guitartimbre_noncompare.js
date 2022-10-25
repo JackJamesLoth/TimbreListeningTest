@@ -16,122 +16,122 @@ var TestConfigStage1 = {
     "Testsets": [
         {
             "Name": "Test 1",
-            "TestID": "test_CortEarth100NS",
+            "TestID": "test_cort",
             "Files": {
-                "A_picking": "Cort Earth 100 NS/picking.mp3",
-                "A_strumming": "Cort Earth 100 NS/strumming.mp3",
-                "A_fingerstyle": "Cort Earth 100 NS/fingerstyle.mp3",
+                "A_picking": "cort_picking.wav",
+                "A_strumming": "cort_strumming.wav",
+                "A_fingerstyle": "cort_fingerstyle.wav",
             },
             "Guitars": {
-                "A": "Cort Earth 100 NS",
+                "A": "cort",
             }
         },
         {
             "Name": "Test 2",
-            "TestID": "test_DAngelicoPremierBoweryLS",
+            "TestID": "test_dangelico",
             "Files": {
-                "A_picking": "DAngelico Premier Bowery LS/picking.mp3",
-                "A_strumming": "DAngelico Premier Bowery LS/strumming.mp3",
-                "A_fingerstyle": "DAngelico Premier Bowery LS/fingerstyle.mp3",
+                "A_picking": "dangelico_picking.wav",
+                "A_strumming": "dangelico_strumming.wav",
+                "A_fingerstyle": "dangelico_fingerstyle.wav",
             },
             "Guitars": {
-                "A": "DAngelico Premier Bowery LS",
+                "A": "dangelico",
             }
         },
         {
             "Name": "Test 3",
-            "TestID": "test_LarryCarltonA3-DNT",
+            "TestID": "test_furch",
             "Files": {
-                "A_picking": "Larry Carlton A3-D NT/picking.mp3",
-                "A_strumming": "Larry Carlton A3-D NT/strumming.mp3",
-                "A_fingerstyle": "Larry Carlton A3-D NT/fingerstyle.mp3",
+                "A_picking": "furch_picking.wav",
+                "A_strumming": "furch_strumming.wav",
+                "A_fingerstyle": "furch_fingerstyle.wav",
             },
             "Guitars": {
-                "A": "Larry Carlton A3-D NT",
+                "A": "furch",
             }
         },
         {
             "Name": "Test 4",
-            "TestID": "test_RecordingKingRDS-11-FE3-TBR",
+            "TestID": "test_recordingking",
             "Files": {
-                "A_picking": "Recording King RDS-11-FE3-TBR/picking.mp3",
-                "A_strumming": "Recording King RDS-11-FE3-TBR/strumming.mp3",
-                "A_fingerstyle": "Recording King RDS-11-FE3-TBR/fingerstyle.mp3",
+                "A_picking": "recordingking_picking.wav",
+                "A_strumming": "recordingking_strumming.wav",
+                "A_fingerstyle": "recordingking_fingerstyle.wav",
             },
             "Guitars": {
-                "A": "Recording King RDS-11-FE3-TBR",
+                "A": "recordingking",
             }
         },
         {
             "Name": "Test 5",
-            "TestID": "test_FenderRedondoSpecialMAH",
+            "TestID": "test_fender",
             "Files": {
-                "A_picking": "Fender Redondo Special MAH/picking.mp3",
-                "A_strumming": "Fender Redondo Special MAH/strumming.mp3",
-                "A_fingerstyle": "Fender Redondo Special MAH/fingerstyle.mp3",
+                "A_picking": "fender_picking.wav",
+                "A_strumming": "fender_strumming.wav",
+                "A_fingerstyle": "fender_fingerstyle.wav",
             },
             "Guitars": {
-                "A": "Fender Redondo Special MAH",
+                "A": "fender",
             }
         },
         {
             "Name": "Test 6",
-            "TestID": "test_SeagullS6OriginalNatural",
+            "TestID": "test_seagullS6",
             "Files": {
-                "A_picking": "Seagull S6 Original Natural/picking.mp3",
-                "A_strumming": "Seagull S6 Original Natural/strumming.mp3",
-                "A_fingerstyle": "Seagull S6 Original Natural/fingerstyle.mp3",
+                "A_picking": "seagullS6_picking.wav",
+                "A_strumming": "seagullS6_strumming.wav",
+                "A_fingerstyle": "seagullS6_fingerstyle.wav",
             },
             "Guitars": {
-                "A": "Seagull S6 Original Natural",
+                "A": "seagullS6",
             }
         },
         {
             "Name": "Test 7",
-            "TestID": "test_CortGoldOC8Natural",
+            "TestID": "test_takamine",
             "Files": {
-                "A_picking": "Cort Gold OC8 Natural/picking.mp3",
-                "A_strumming": "Cort Gold OC8 Natural/strumming.mp3",
-                "A_fingerstyle": "Cort Gold OC8 Natural/fingerstyle.mp3",
+                "A_picking": "takamine_picking.wav",
+                "A_strumming": "takamine_strumming.wav",
+                "A_fingerstyle": "takamine_fingerstyle.wav",
             },
             "Guitars": {
-                "A": "Cort Gold OC8 Natural",
+                "A": "takamine",
             }
         },
         {
             "Name": "Test 8",
-            "TestID": "test_EpiphoneHummingbird",
+            "TestID": "test_epiphone",
             "Files": {
-                "A_picking": "Epiphone Hummingbird/picking.mp3",
-                "A_strumming": "Epiphone Hummingbird/strumming.mp3",
-                "A_fingerstyle": "Epiphone Hummingbird/fingerstyle.mp3",
+                "A_picking": "epiphone_picking.wav",
+                "A_strumming": "epiphone_strumming.wav",
+                "A_fingerstyle": "epiphone_fingerstyle.wav",
             },
             "Guitars": {
-                "A": "Epiphone Hummingbird",
+                "A": "epiphone",
             }
         },
         {
             "Name": "Test 9",
-            "TestID": "test_LAGTHV20DCETramontaneHyVibe",
+            "TestID": "test_lag",
             "Files": {
-                "A_picking": "LAG THV20DCE Tramontane HyVibe/picking.mp3",
-                "A_strumming": "LAG THV20DCE Tramontane HyVibe/strumming.mp3",
-                "A_fingerstyle": "LAG THV20DCE Tramontane HyVibe/fingerstyle.mp3",
+                "A_picking": "lag_picking.wav",
+                "A_strumming": "lag_strumming.wav",
+                "A_fingerstyle": "lag_fingerstyle.wav",
             },
             "Guitars": {
-                "A": "LAG THV20DCE Tramontane HyVibe",
+                "A": "lag",
             }
         },
         {
             "Name": "Test 10",
-            "TestID": "test_SeagullArtistMosaicCHCWBourbonB",
+            "TestID": "test_seagullartist",
             "Files": {
-                "A_picking": "Seagull Artist Mosaic CH CW Bourbon B/picking.mp3",
-                "A_strumming": "Seagull Artist Mosaic CH CW Bourbon B/strumming.mp3",
-                "A_fingerstyle": "Seagull Artist Mosaic CH CW Bourbon B/fingerstyle.mp3",
+                "A_picking": "seagullartist_picking.wav",
+                "A_strumming": "seagullartist_strumming.wav",
+                "A_fingerstyle": "seagullartist_fingerstyle.wav",
             },
             "Guitars": {
-                "A": "Seagull Artist Mosaic CH CW Bourbon B",
+                "A": "seagullartist",
             }
         },
     ]

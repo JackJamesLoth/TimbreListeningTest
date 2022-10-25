@@ -1207,6 +1207,8 @@ function createButtons(testInstance, fileA, fileB, testIdx) {
     cell[0].innerHTML = '<button id="play_'+fileA+'_Btn" class="playButton" rel="'+fileA+'" clicked="false">Guitar A</button>';
     testInstance.addAudio(testIdx, fileA, fileA);
 
+    console.log(fileA)
+
     cell[1] = row.insertCell(-1);
     cell[1].innerHTML = '<button id="play_'+fileB+'_Btn" class="playButton" rel="'+fileB+'">Guitar B</button>';
     testInstance.addAudio(testIdx, fileB, fileB);
@@ -1805,13 +1807,13 @@ TimbreTraining.prototype.createTestDOM = function (TestIdx) {
 
         // Fingerstyle 
         createLabel(document, "Style: Fingerstyle")
-        createButtons(this, "A_picking", "B_picking", TestIdx)
+        createButtons(this, "A_fingerstyle", "B_fingerstyle", TestIdx)
         createSlider(document, "dissimilaritySliderFingerstyle", "Please rate how dissimilar/similar the timbres of the two guitars are", "Strongly dissimilar", "Strongly similar")
         createSlider(document, "preferenceSliderFingerstyle", "Please rate your preference between the timbres of guitar A and B", "Strongly prefer guitar A", "Strongly prefer guitar B")
 
         // Strumming 
         createLabel(document, "Style: Strumming")
-        createButtons(this, "A_picking", "B_picking", TestIdx)
+        createButtons(this, "A_strumming", "B_strumming", TestIdx)
         createSlider(document, "dissimilaritySliderStrumming", "Please rate how dissimilar/similar the timbres of the two guitars are", "Strongly dissimilar", "Strongly similar")
         createSlider(document, "preferenceSliderStrumming", "Please rate your preference between the timbres of guitar A and B", "Strongly prefer guitar A", "Strongly prefer guitar B")
 
