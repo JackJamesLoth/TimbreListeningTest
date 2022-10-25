@@ -602,6 +602,8 @@ $.extend({ alert: function (message, title) {
     // ###################################################################
     ListeningTest.prototype.nextTest = function() {
 
+        console.log(this.TestState)
+
         
 
         this.pauseAllAudios();
@@ -639,7 +641,7 @@ $.extend({ alert: function (message, title) {
 
 
                     // Delete cookies
-                    deleteTestState()
+                    //deleteTestState()
 
                     this.formatResults()
                     this.endOfTest();
@@ -754,8 +756,8 @@ $.extend({ alert: function (message, title) {
             this.createTestDOM(TestIdx);
 
             // set current test name
-            $('#TestHeading').html(this.TestConfig.Testsets[TestIdx].Name + " (" + (this.TestState.CurrentTest+1) + " of " + this.TestState.TestSequence.length + ")");
-            //$('#TestHeading').html(" Test " + (this.TestState.CurrentTest+1) + " of " + this.TestState.TestSequence.length);
+            //$('#TestHeading').html(this.TestConfig.Testsets[TestIdx].Name + " (" + (this.TestState.CurrentTest+1) + " of " + this.TestState.TestSequence.length + ")");
+            $('#TestHeading').html(" Test " + (this.TestState.CurrentTest+1) + " of " + this.TestState.TestSequence.length);
             $('#TestHeading').show();
 
             // hide everything instead of load animation
@@ -1470,13 +1472,12 @@ TimbreTest.prototype.showInstructions = function () {
 
 TimbreTest.prototype.finalTest = function () {
     if (confirm("This was the last test in Stage 2. Do you want to finish?")) {
+        deleteTestState()
         return true;
     } else {
         return false;
     }
 }
-
-
 
 // ###################################################################
 // Preference test main object (modelled after Preference-Test)
