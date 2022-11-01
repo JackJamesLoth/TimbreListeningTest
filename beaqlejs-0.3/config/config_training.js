@@ -15,30 +15,30 @@ var TestConfigTraining = {
     "Testsets": [
         {
             "Name": "Test 1",
-            "TestID": "test_EpiphoneJ-15ECDeluxeVS",
+            "TestID": "test_CortGoldOC8Natural",
             "Files": {
-                "A_picking": "TR_epiphone_picking.wav",
-                "A_strumming": "TR_epiphone_strumming.wav",
-                "A_fingerstyle": "TR_epiphone_fingerstyle.wav",
+                "A_picking": "TR_cort_picking.wav",
+                "A_strumming": "TR_cort_strumming.wav",
+                "A_fingerstyle": "TR_cort_fingerstyle.wav",
             },
             "Guitars": {
-                "A": "Epiphone J-15 EC Deluxe VS"
+                "A": "Cort Gold OC8 Natural"
             }
         },
         {
             "Name": "Test 2",
-            "TestID": "test_Dangelico_Epiphone",
+            "TestID": "test_Fender_Epiphone",
             "Files": {
-                "A_picking": "TR_dangelico_picking.wav",
+                "A_picking": "TR_fender_picking.wav",
                 "B_picking": "TR_epiphone_picking.wav",
-                "A_strumming": "TR_dangelico_strumming.wav",
+                "A_strumming": "TR_fender_strumming.wav",
                 "B_strumming": "TR_epiphone_strumming.wav",
-                "A_fingerstyle": "TR_dangelico_fingerstyle.wav",
+                "A_fingerstyle": "TR_fender_fingerstyle.wav",
                 "B_fingerstyle": "TR_epiphone_fingerstyle.wav",
             },
             "Guitars": {
-                "A": "DAngelico Premier Bowery ANM",
-                "B": "Epiphone J-15 EC Deluxe VS",
+                "A": "Fender Newporter Player CAR",
+                "B": "Epiphone J-45 EC AVS",
             }
         }
     ]

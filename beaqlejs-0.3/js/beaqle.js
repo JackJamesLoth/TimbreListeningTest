@@ -1286,7 +1286,7 @@ TimbreTest.prototype.createTestDOM = function (TestIdx) {
         // Create test instructions
         var div = document.createElement('div')
         div.setAttribute('id', 'testInstructions')
-        div.append("Listen and compare the recordings of the two guitars for each of the three styles and answer the questions. You can listen to the recordings as many times as you wish. Please listen to the entire audio for each guitar style. Do not change the sound level during the study except if strictly necessary. You are encouraged to use the full range of the scales. Avoid taking breaks in the middle of rating a pair.")
+        div.append("You will compare recordings of two different guitars (Guitars A and B) on which the same musical excerpt is played. The guitars have been recorded in the same conditions. Your judgements should focus on the timbre of the guitars and not the quality of the recording or musical playing. The following tasks will be repeated for three playing styles (picking, fingerstyle, and strumming). Listen to the recordings of Guitars A and B entirely. Use the two dedicated sliders to rate how dissimilar/similar you feel the timbres of the two guitars are, and your preference between the timbres of Guitars A and B. You are encouraged to use the full range of the rating scales. You can listen to the recordings as many times as you wish. Do not change the sound level except if strictly necessary. Avoid taking breaks in the middle of completing a page.")
         $('#testElementsContainer').append(div);
 
         // create random file mapping if not yet done
@@ -1505,7 +1505,7 @@ TimbrePreferenceTest.prototype.createTestDOM = function (TestIdx) {
     // Create test instructions
     var div = document.createElement('div')
     div.setAttribute('id', 'testInstructions')
-    div.append("Listen to the recordings of the same guitar for three different playing styles (picking, fingerstyle, and strumming) and describe the timbre of the guitar using your own words. Then, describe what you like and what you dislike about the timbre of the guitar in the two separate text boxes. You need to listen to the three guitar recordings entirely. You can listen to the recordings as many times as you wish. Do not change the sound level during the main test except if strictly necessary. Avoid taking breaks in the middle of completing a page.")
+    div.append("The three musical excerpts on this page are recordings of the same acoustic guitar played in different styles (picking, fingerstyle, strumming). You need to listen to the three recordings entirely. Complete the following tasks using the three dedicated text boxes: describe the timbre of the guitar, describe what you like about the timbre of the guitar, describe what you dislike about the timbre of the guitar. Your judgements should focus on the timbre of the guitar and not the quality of the recording or musical playing. You can listen to the recordings as many times as you wish.")
     $('#testElementsContainer').append(div);
 
     var tab = document.createElement('table');
@@ -1725,7 +1725,7 @@ TimbreTraining.prototype.createTestDOM = function (TestIdx) {
         // Create test instructions
         var div = document.createElement('div')
         div.setAttribute('id', 'testInstructions')
-        div.append("In the first stage of the test, you need to listen to three recordings of a single guitar corresponding to different playing styles (picking, fingerstyle, and strumming) and describe the timbre of the guitar using your own words. You then need to describe what you like and what you dislike about the timbre of this guitar in two separate text boxes. Please listen to the three guitar recordings entirely. You can listen to the recordings as many times as you wish.")
+        div.append("The three musical excerpts on this page are recordings of the same acoustic guitar played in different styles (picking, fingerstyle, strumming). You need to listen to the three recordings entirely. Complete the following tasks using the three dedicated text boxes: describe the timbre of the guitar, describe what you like about the timbre of the guitar, describe what you dislike about the timbre of the guitar. Your judgements should focus on the timbre of the guitar and not the quality of the recording or musical playing. You can listen to the recordings as many times as you wish.")
         $('#testElementsContainer').append(div);
 
         var tab = document.createElement('table');
@@ -1797,7 +1797,7 @@ TimbreTraining.prototype.createTestDOM = function (TestIdx) {
         // Create test instructions
         var div = document.createElement('div')
         div.setAttribute('id', 'testInstructions')
-        div.append("In the second stage of the test, you need to listen to recordings of two different guitars playing the same musical excerpt. Please listen to both recording entirely and use the slider to rate how dissimilar/similar you feel the timbres of the two guitars are. Next, use the second slider to rate your preference for the guitar timbres. You can listen to the recordings several times if you wish. This task needs to be completed for the three playing styles separately (picking, fingerstyle, and strumming).")
+        div.append("In the second stage of the test, you will compare recordings of two different guitars (Guitars A and B) on which the same musical excerpt is played. The guitars have been recorded in the same conditions. Your judgements should focus on the timbre of the guitars and not the quality of the recording or musical playing. The following tasks will be repeated for three playing styles (picking, fingerstyle, and strumming). Listen to the recordings of Guitars A and B entirely.  Use the two dedicated sliders to rate how dissimilar/similar you feel the timbres of the two guitars are, and your preference between the timbres of Guitars A and B. You are encouraged to use the full range of the rating scales. You can listen to the recordings as many times as you wish. Do not change the sound level except if strictly necessary. Avoid taking breaks in the middle of completing a page.")
         $('#testElementsContainer').append(div);
 
         // Picking 
@@ -1858,6 +1858,30 @@ TimbreTraining.prototype.saveRatings = function (TestIdx) {
 // Check if all audio has been listened to and text boxes filled
 TimbreTraining.prototype.checkTestElements = function () {
 
+    if (!this.testIsOver) {
+        if (this.TestState.CurrentTest == 0) {
+            if (this.TestState.AllAudioListened[this.TestState.CurrentTest] < 3) {
+                alert("Please ensure you have listened to every sound example before continuing.")
+                return(false)
+            } else if ( $("#timbreComment").val().length == 0 || $("#timbreLikeComment").val().length == 0 || $("#timbreDislikeComment").val().length == 0) {
+                alert("Please ensure you have filled in the text boxes before continuing")
+                return(false)
+            }
+            return(true)
+        } else {
+            if (this.TestState.AllAudioListened[this.TestState.CurrentTest] < 6) {
+                alert("Please ensure you have listened to every sound example before continuing.")
+                return(false)
+            } else if (this.TestState.AllSlidersClicked[this.TestState.CurrentTest] < 6) {
+                if (!confirm("You have not used all of the sliders. Are you sure you would like to continue with 1 or more sliders set to the default value?")) {
+                    return(false)
+                } else {
+                    this.TestState.AllSlidersClicked[this.TestState.CurrentTest] = 3
+                }
+            }
+        }
+    }
+    
     /*
     if (!this.testIsOver) {
         if (this.TestState.AllAudioListened[this.TestState.CurrentTest] < 3) {
